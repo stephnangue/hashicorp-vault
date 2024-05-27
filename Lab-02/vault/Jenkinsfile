@@ -6,7 +6,7 @@ pipeline {
             steps{
                 dir('Lab-02/vault') {
                     sh '''
-                      ls -lrt
+                      ansible-galaxy collection list
                       ansible-playbook haproxy_configure.yml
                     '''
                 }
