@@ -6,6 +6,7 @@ pipeline {
             steps{
                 dir('Lab-02/vault') {
                     sh '''
+                      ansible-galaxy install -r requirements.yml
                       ansible-galaxy collection list
                     '''
                 }
