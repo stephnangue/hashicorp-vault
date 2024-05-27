@@ -4,7 +4,11 @@ pipeline {
     stages {
         stage('Quality Test') {
             steps{
-                echo "Running Quality tests"
+                dir('scripts') {
+                    sh '''
+                      ansible-playbook haproxy_configure.yml
+                    '''
+                }
             }
         }
         stage('Unit Test') {
