@@ -282,10 +282,11 @@
         internal_dns_resolver: "{{ hostvars[groups['ipa_server'][0]]['ansible_host'] }}"
         internet_dns_resolver: "{{ aws_dns_resolver.stdout }}"
 
-    - name: Install the latest unzip
+    - name: Install packages
       ansible.builtin.package:
         name:
           - unzip
+          - ansible-core
         state: latest
 
     - name: Check if Terraform v{{ terraform_version }} is present
