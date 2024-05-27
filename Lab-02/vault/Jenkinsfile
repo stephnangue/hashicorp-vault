@@ -4,7 +4,7 @@ pipeline {
     stages {
         stage('Quality Test') {
             steps{
-                dir('scripts') {
+                dir('Lab-02') {
                     sh '''
                       ansible-playbook haproxy_configure.yml
                     '''
