@@ -36,7 +36,7 @@ pipeline {
                 VAULT_TOKEN = credentials('autounseal-token')
             }
             steps{
-                echo ${VAULT_TOKEN}
+                echo "${VAULT_TOKEN}"
             }          
         }
     }
