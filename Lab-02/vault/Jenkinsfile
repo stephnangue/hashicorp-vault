@@ -2,19 +2,23 @@ pipeline {
   agent any
 
     stages {
-        stage('Configure Haproxy') {
+        stage('Install requirements') {
             steps{
                 dir('Lab-02/vault') {
                     sh '''
-                      ansible-galaxy install -r requirements.yml
-                      ansible-playbook haproxy_configure.yml
+                      ansible-galaxy install -r requirements/ansible-galaxy.yml
+                      pip3 install -r requirements/pyhton.txt
                     '''
                 }
             }
         }
-        stage('Unit Test') {
+        stage('Configure Haproxy') {
             steps{
-                echo "Running Unit tests"
+                dir('Lab-02/vault') {
+                    sh '''
+                        ansible-playbook haproxy_configure.yml
+                    '''
+                }
             }
         }
         stage('Security Test') {
