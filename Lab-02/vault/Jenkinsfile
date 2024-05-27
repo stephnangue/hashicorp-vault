@@ -8,7 +8,7 @@ pipeline {
                     sh '''
                       ansible-galaxy install -r requirements/ansible-galaxy.yml
                       python -m ensurepip --upgrade
-                      python -m pip install -r requirements/pyhton.txt
+                      python -m pip install -r requirements/python.txt
                     '''
                 }
             }
