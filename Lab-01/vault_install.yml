@@ -1,0 +1,298 @@
+---
+- name: Download Vault and construct the inventory
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: Donwload and unzip vault
+      unarchive:
+        src: https://releases.hashicorp.com/vault/{{ vault_version }}/vault_{{ vault_version }}_linux_amd64.zip
+        dest: /tmp
+        remote_src: yes
+
+    - name: Get ec2 instances info
+      ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          "tag:stack": "{{ stack_name }}"
+          instance-state-name: [ "running" ]
+      register: ec2_list
+
+    - name: Add instances to inventory
+      add_host:
+        name: "{{ item.tags.app }}.{{ domain_name }}"
+        ansible_user: ec2-user
+        ansible_host: "{{ item.private_ip_address }}"
+        host_key_checking: false
+        groups: "aws,{{ item.tags.type }},{{ item.tags.app }}"
+      no_log: true
+      when: ec2_list.instances|length > 0
+      loop: "{{ ec2_list['instances'] | flatten(levels=1) }}"
+
+    - name: Get ec2 bastion info
+      ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          "tag:stack": "{{ stack_name }}"
+          "tag:app": "bastion"
+          instance-state-name: [ "running" ]
+      register: bastion
+
+- name: Install Vault
+  become: yes
+  hosts: vault
+  serial: 1
+  vars:
+    ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
+
+  tasks:
+    - name: Stop all services
+      systemd:
+        state: stopped
+        name: "{{ item.service }}"
+      with_items:
+        - {service: vault}
+      register: result_systemd_stop
+      failed_when: "result_systemd_stop is failed and 'Could not find the requested service' not in result_systemd_stop.msg"
+
+    - name: Configure the firewall 
+      ansible.builtin.shell: | 
+        firewall-cmd --permanent --add-port={8200/tcp,8201/tcp,443/tcp}
+        firewall-cmd --permanent --add-service={http,https}
+        firewall-cmd --reload
+        firewall-cmd --runtime-to-permanent
+      register: firewall
+      failed_when: firewall.rc != 0 and firewall.rc != 1
+      changed_when: firewall.rc == 0
+
+    - name: Create vault user
+      user: 
+        name: "{{ item.user_name }}"
+        uid: "{{ item.user_id }}"
+      with_items:
+        - {user_name: "{{ vault_user }}", user_id: 990}
+
+    - name: Create vault group
+      group: 
+        name: "{{ item.group_name }}"
+        gid: "{{ item.group_id }}"
+      with_items:
+        - {group_name: "{{ vault_user }}", group_id: 990}
+
+    - name: Create directories for vault
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ vault_user }}"
+        group: "{{ vault_user }}"
+      with_items:
+        - "{{ vault_bin_dir }}"
+        - "{{ vault_conf_dir }}"
+        - "{{ vault_certs_dir }}"
+        - "{{ vault_data_dir }}"
+
+    - name: Install vault binary
+      copy:
+        src: /tmp/vault
+        dest: "{{ vault_bin_dir }}/vault"
+        mode: a+x
+
+    - name: Deploy vault config files
+      template:
+        src: "{{ item.src_file }}"
+        dest: "{{ item.dest_file }}"
+        owner: "{{ item.user }}"
+        group: "{{ item.group }}"
+        mode: '0644'
+      with_items:
+        - {src_file: "vault.env.j2", dest_file: "{{ vault_conf_dir }}/vault.env", user: "{{ vault_user }}", group: "{{ vault_user }}"}
+        - {src_file: "vault.hcl.j2", dest_file: "{{ vault_conf_dir }}/vault.hcl", user: "{{ vault_user }}", group: "{{ vault_user }}"}
+        - {src_file: "vault.service.j2", dest_file: "/etc/systemd/system/vault.service", user: root, group: root}
+
+    - name: Add environment variables to ~/.bashrc
+      lineinfile:
+        dest: "~/.bashrc"
+        regexp: "^VAULT_ADDR="
+        line: "export VAULT_ADDR=http://127.0.0.1:8200"
+      become: false
+
+    - name: Add vault alias
+      lineinfile:
+        dest: "~/.bashrc"
+        line: 'alias vault="{{ vault_bin_dir }}/vault"'
+      become: false
+
+    - name: Don't log vault commands in bash history
+      lineinfile:
+        dest: "/etc/bashrc"
+        line: 'export HISTIGNORE="&:vault*"'
+
+    - name: Copy the certificate and the private key
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        remote_src: yes
+      with_items:
+        - {src: "{{ keys_dir }}/{{ inventory_hostname }}.key", dest: "{{ vault_certs_dir }}/key.pem"}
+        - {src: "{{ certs_dir }}/{{ inventory_hostname }}.crt", dest: "{{ vault_certs_dir }}/cert.pem"}
+
+    - name: Clean Vault data
+      shell: /bin/rm -rf {{ vault_data_dir }}/*
+      when: erase_data
+
+    - name: Deploy vault-unseal.sh
+      template:
+        src: "{{ item.src_file }}"
+        dest: "{{ item.dest_file }}"
+        owner: "{{ item.user }}"
+        group: "{{ item.group }}"
+        mode: a+x
+      with_items:
+        - {src_file: "vault-unseal.sh.j2", dest_file: "{{ vault_bin_dir }}/vault-unseal.sh", user: "{{ vault_user }}", group: "{{ vault_user }}"}
+      when: seal_type == "shamir" and erase_data
+
+    - name: Start all services
+      systemd:
+        state: started
+        enabled: yes
+        daemon_reload: yes
+        name: "{{ item.service }}"
+      with_items:
+        - {service: vault}
+
+    - name: Wait for vault to be available
+      wait_for:
+        host: 127.0.0.1
+        port: 8200
+        timeout: 60
+
+    - name: Init vault
+      uri:
+        url: http://127.0.0.1:8200/v1/sys/init
+        method: POST
+        return_content: yes
+        body: "{ \"secret_shares\": 3, \"secret_threshold\": 3 }"
+        body_format: json
+        validate_certs: no
+        status_code: [200, 400]
+        headers:
+          Content-type: "application/json"
+      register: vault_init
+      when: seal_type == "shamir" and erase_data
+
+    - name: "Unseal the vault stet 1 / 3"
+      uri:
+        url: http://127.0.0.1:8200/v1/sys/unseal
+        method: POST
+        return_content: yes
+        body_format: json
+        body: 
+          key: "{{ vault_init['json']['keys'][0] }}"
+        validate_certs: no
+        headers:
+          Content-type: "application/json"
+      when: seal_type == "shamir" and erase_data
+
+    - name: Unseal the vault stet 2 / 3
+      uri:
+        url: http://127.0.0.1:8200/v1/sys/unseal
+        method: POST
+        return_content: yes
+        body_format: json
+        body: 
+          key: "{{ vault_init['json']['keys'][1] }}"
+        validate_certs: no
+        headers:
+          Content-type: "application/json"
+      when: seal_type == "shamir" and erase_data
+
+    - name: Unseal the vault stet 3 / 3
+      uri:
+        url: http://127.0.0.1:8200/v1/sys/unseal
+        method: POST
+        return_content: yes
+        body_format: json
+        body: 
+          key: "{{ vault_init['json']['keys'][2] }}"
+        validate_certs: no
+        headers:
+          Content-type: "application/json"
+      when: seal_type == "shamir" and erase_data
+
+    - name: Populate vault-unseal.sh with root token
+      lineinfile:
+        dest: "{{ vault_bin_dir }}/vault-unseal.sh"
+        regexp: "^ROOT_TOKEN"
+        line: "ROOT_TOKEN={{ vault_init['json']['root_token'] }}"
+      when: seal_type == "shamir" and erase_data
+
+    - name: Populate vault-unseal.sh with key_1
+      lineinfile:
+        dest: "{{ vault_bin_dir }}/vault-unseal.sh"
+        regexp: "^KEY_1"
+        line: "KEY_1={{ vault_init['json']['keys'][0] }}"
+      when: seal_type == "shamir" and erase_data
+
+    - name: Populate vault-unseal.sh with key_2
+      lineinfile:
+        dest: "{{ vault_bin_dir }}/vault-unseal.sh"
+        regexp: "^KEY_2"
+        line: "KEY_2={{ vault_init['json']['keys'][1] }}"
+      when: seal_type == "shamir" and erase_data
+
+    - name: Populate vault-unseal.sh with key_3
+      lineinfile:
+        dest: "{{ vault_bin_dir }}/vault-unseal.sh"
+        regexp: "^KEY_3"
+        line: "KEY_3={{ vault_init['json']['keys'][2] }}"
+      when: seal_type == "shamir" and erase_data
+      
+    - name: Check that vault is unsealed
+      uri:
+        url: http://127.0.0.1:8200/v1/sys/seal-status
+        method: GET
+        status_code: 200
+        headers:
+          Content-type: "application/json"
+      register: this
+      until: this.status == 200
+      retries: 5
+      delay: 5
+
+    - name: Check that vault is healthy
+      uri:
+        url: "http://127.0.0.1:8200/v1/sys/health?standbyok=true&perfstandbyok=true&drsecondarycode=200"
+        method: GET
+        status_code: 200
+        headers:
+          Content-type: "application/json"
+      register: health_check
+
+    - name: Check that we have a leader
+      uri:
+        url: http://127.0.0.1:8200/v1/sys/leader
+        method: GET
+        status_code: 200
+        headers:
+          Content-type: "application/json"
+      register: leader
+      retries: 10
+      delay: 5
+      until: leader.json.leader_address is search('vault')
+
+    - name: Display status
+      debug:
+        msg: 
+          - "The Vault leader_cluster_address is: {{ leader.json.leader_address }}"
+          - "The Vault leader Url is: {{ leader.json.leader_address }}"
+          - "The installed version of Vault is : {{ health_check.json.version }}"
+
+    - name: Read the root token from file
+      ansible.builtin.shell: |
+        root_token=$(cat {{ vault_bin_dir }}/vault-unseal.sh | grep 'ROOT_TOKEN=' | cut -d '=' -f 2)
+        echo $root_token
+      register: root_token
+      when: seal_type == "shamir"
+
+

@@ -1,0 +1,201 @@
+# provision.yml
+---
+- name: Provision the infrastructure
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: Create cfn stack
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        region: "{{ region }}"
+        state: present
+        template: "infra_template.yml"
+        template_parameters:
+          KeyName: "{{ keypair }}"
+          BastionInstanceType: "{{ bastion_instance_type }}"
+          VaultInstanceType: "{{ vault_instance_type }}"
+          IdentityInstanceType: "{{ identity_instance_type }}"
+          SSHLocation: "{{ ssh_location }}"
+          PublicSubnetID: "{{ public_subnet_id }}"
+          ProxySubnetID: "{{ proxy_subnet_id }}"
+        tags:
+          stack: "{{ stack_name }}"
+
+    - name: Get ec2 instances info
+      ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          "tag:stack": "{{ stack_name }}"
+          instance-state-name: [ "running" ]
+      register: ec2_list
+
+    - name: Add instances to inventory
+      add_host:
+        name: "{{ item.tags.app }}.{{ domain_name }}"
+        ansible_user: ec2-user
+        ansible_host: "{{ item.private_ip_address }}"
+        host_key_checking: false
+        groups: "aws,{{ item.tags.type }},{{ item.tags.app }}"
+      no_log: true
+      when: ec2_list.instances|length > 0
+      loop: "{{ ec2_list['instances'] | flatten(levels=1) }}"
+
+    - name: Get ec2 bastion info
+      ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          "tag:stack": "{{ stack_name }}"
+          "tag:app": "bastion"
+          instance-state-name: [ "running" ]
+      register: bastion
+
+- name: Check instances availability
+  hosts: aws
+  gather_facts: false
+  vars:
+    ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
+  tasks:
+    - name: wait for instances to become available
+      wait_for_connection:
+
+- name: Configure the identity server
+  hosts: ipa_server
+  gather_facts: false
+  become: true
+  vars:
+    ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
+
+  tasks:
+    - name: Set a hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+
+    - name: Clean the /etc/hosts file
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^127\.0\.0\.1'
+        line: ""
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Configure the firewall and deactivate ipv6
+      ansible.builtin.shell: | 
+        firewall-cmd --permanent --add-port={80/tcp,443/tcp,389/tcp,636/tcp,88/tcp,88/udp,464/tcp,464/udp,53/tcp,53/udp,123/udp}
+        firewall-cmd --permanent --add-service={freeipa-ldap,freeipa-ldaps,dns,http,https}
+        firewall-cmd --reload
+        firewall-cmd --runtime-to-permanent
+        sysctl net.ipv6.conf.all.disable_ipv6=0
+        sysctl net.ipv6.conf.lo.disable_ipv6=0
+      register: firewall
+      failed_when: firewall.rc != 0 and firewall.rc != 1
+      changed_when: firewall.rc == 0
+
+    - name: Install ipaserver
+      ansible.builtin.shell: | 
+        ipa-server-install --unattended \
+        --no-host-dns --no-ntp --mkhomedir --setup-dns --no-reverse --no-forwarders \
+        --hostname "{{ inventory_hostname }}" \
+        --domain "{{ domain_name }}" \
+        --realm "{{ domain_name | upper }}" \
+        --ds-password "{{ ipadm_password }}" \
+        --admin-password "{{ ipaadmin_password }}"
+      register: install
+      failed_when: install.rc != 0 and install.rc != 1
+      changed_when: install.rc == 0
+      async: 600
+      poll: 30
+
+    - name: Download the CA Certificate
+      ansible.builtin.fetch:
+        src: /root/cacert.p12
+        dest: "{{ ca_cert_download_dir }}/cacert.p12"
+        flat: yes
+
+- name: Configure the identity clients
+  hosts: ipa_client
+  gather_facts: true
+  become: true
+  vars:
+    ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
+
+  tasks:
+    - name: Set a hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+
+    - name: Build the /etc/hosts file
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^127\.0\.0\.1'
+        line: "{{ ansible_host }} {{ inventory_hostname }} {{ ansible_hostname }}"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Configure search in /etc/resolv.conf file
+      ansible.builtin.lineinfile:
+        path: /etc/resolv.conf
+        regexp: '^search'
+        line: "search {{ domain_name }}"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Configure nameserver in /etc/resolv.conf file
+      ansible.builtin.lineinfile:
+        path: /etc/resolv.conf
+        regexp: '^nameserver'
+        line: "nameserver {{ hostvars[groups['ipa_server'][0]]['ansible_host'] }}"
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Install ipaclient
+      ansible.builtin.shell: | 
+        ipa-client-install --unattended \
+        --mkhomedir --no-ntp \
+        --domain "{{ domain_name }}" \
+        --realm "{{ domain_name | upper }}" \
+        --principal admin \
+        --password "{{ ipaadmin_password }}" \
+        --hostname {{ inventory_hostname }}
+      register: install
+      failed_when: install.rc != 0 and install.rc != 1 and install.rc != 3
+      changed_when: install.rc == 0
+      async: 120
+      poll: 5
+
+    - name: Generate a TLS Certificate and a Private Key 
+      ansible.builtin.shell: |
+        ipa-getcert request -K host/{{ inventory_hostname }} -k {{ keys_dir }}/{{ inventory_hostname }}.key -f {{ certs_dir }}/{{ inventory_hostname }}.crt -D {{ inventory_hostname }} -N {{ inventory_hostname }}
+      register: generate
+      failed_when: generate.rc != 0 and generate.rc != 2
+      changed_when: generate.rc == 0
+
+- name: Configure the Web browser
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: Install the CA Certificate
+      ansible.builtin.shell: |
+        certutil -D -d "{{ firefox_profile }}" -n OpenLab
+        openssl pkcs12 -in {{ ca_cert_download_dir }}/cacert.p12 -out {{ ca_cert_download_dir }}/cacert.pem -clcerts -nokeys -passin 'pass:{{ ipaadmin_password }}'
+        certutil -A -n OpenLab -t "TCu,Cuw,Tuw" -i {{ ca_cert_download_dir }}/cacert.pem -d sql:"{{ firefox_profile }}"
+        certutil -L -d "{{ firefox_profile }}"
+
+    - name: Start the ssh SOCKS tunnel
+      ansible.builtin.shell: |
+        pid=$(ps aux | grep "ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -N -D 8157" | grep -v grep | tr -s " " | cut -d " " -f 2 | head -n 1)
+        kill $pid
+        ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes  -N -D 8157 ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }} &
+
+    - name: Launch firefox with "openlab" profile
+      ansible.builtin.shell: |
+        pid=$(ps aux | grep "{{ firefox_binary }} -P openlab" |  grep -v grep | tr -s " " | cut -d " " -f 2 | head -n 1)
+        kill $pid
+        {{ firefox_binary }} -P openlab &

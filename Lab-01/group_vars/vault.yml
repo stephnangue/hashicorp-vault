@@ -1,0 +1,13 @@
+peers:
+  - vault.openlab.net
+cluster_name: test-cluster
+log_level: TRACE
+vault_user: vault
+vault_bin_dir: /opt/vault/bin
+vault_conf_dir: /opt/vault/conf
+vault_data_dir: /opt/vault/data
+vault_certs_dir: /opt/vault/certs
+vault_client_ca_file: /etc/pki/tls/certs/ca-cundle.crt
+# Erase data and Init vault if seal_type is Shamir
+erase_data: true
+seal_type: shamir

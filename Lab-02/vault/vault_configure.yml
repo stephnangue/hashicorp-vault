@@ -1,0 +1,23 @@
+---
+- name: Configure Vault using Terraform
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  vars:
+    terraform_binary: "/usr/local/bin/terraform"
+    terraform_project: "terraform/vault/dev/"
+
+  environment:
+    VAULT_ADDR: "https://vault.{{ domain_name }}"
+    VAULT_TOKEN: "{{ root_token }}"
+
+  tasks:
+    - name: Configure vault
+      terraform:
+        binary_path: "{{ terraform_binary }}"
+        project_path: "{{ terraform_project }}"
+        force_init: true
+        variables:
+          domain_name: "{{ domain_name }}"
+          ldap_all_dc: "{{ ldap_all_dc }}"
+          ldap_bind_pass: "{{ vault_bind_user_password }}"

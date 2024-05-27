@@ -1,0 +1,54 @@
+resolvers nameservers
+    parse-resolv-conf
+    hold valid 10s
+
+global
+    daemon
+    maxconn 4000
+    user    haproxy
+    group   haproxy
+
+    stats socket /run/haproxy.sock mode 600 level admin
+    stats timeout 2m
+
+    ssl-default-bind-ciphers PROFILE=SYSTEM
+    ssl-default-bind-options no-sslv3 no-tlsv10 no-tlsv11 no-tls-tickets
+
+    ssl-default-server-ciphers PROFILE=SYSTEM
+    ssl-default-bind-options no-sslv3 no-tlsv10 no-tlsv11 no-tls-tickets
+
+    tune.ssl.default-dh-param 2048
+    ssl-server-verify none
+
+defaults
+    timeout connect 5s
+    timeout client 50s
+    timeout server 50s
+
+frontend main
+    mode http
+    bind :443 ssl crt {{ haproxy_cert_dir }}/cert.pem
+
+    option forwardfor
+
+    http-response set-header X-Proxied-Via {{ server_name }}
+    http-response set-header Strict-Transport-Security max-age=63072000
+
+    default_backend vault
+
+backend vault
+    mode http
+    balance roundrobin
+    option httpchk GET /v1/sys/health
+
+{% for node_name, node_dns in backend.items() %}
+    server {{ node_name }} {{ node_dns }}:443 check ssl
+{% endfor %}
+
+listen stats
+    mode http
+    bind 172.0.0.1:8080
+
+    stats enable
+    stats uri /
+    stats admin if TRUE

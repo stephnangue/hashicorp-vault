@@ -1,0 +1,33 @@
+---
+####### Variables to modify #######
+public_subnet_id: subnet-0b8d3a0120330fa30
+proxy_subnet_id: subnet-067768e07ae2dcfb6
+ssh_location: 0.0.0.0/0
+aws_key: /Users/stephanenangue/Downloads/bastion_aws_key_pair.pem
+
+####### Variables NOT to modify #######
+region: us-east-1
+bastion_instance_type: t2.micro
+vault_instance_type: t2.medium
+identity_instance_type: t2.medium
+devops_instance_type: t2.small
+keypair: bastion_aws_key_pair
+stack_name: VaultInfra
+certs_dir: /etc/pki/tls/certs
+keys_dir: /etc/pki/tls/private
+
+domain_name: openlab.net
+ldap_all_dc: 'dc=openlab,dc=net'
+ipadm_password: FreeIPAServer@3498
+ipaadmin_password: FreeIPAServer@3498
+vault_bind_user_password: SecretVaultBin@3421d
+
+####### MacOS specific Variables #######
+ca_cert_download_dir: /tmp
+firefox_profile: "/Users/stephanenangue/Library/Application\ Support/Firefox/Profiles/ylxsje6v.openlab"
+firefox_binary: /Applications/Firefox.app/Contents/MacOS/firefox
+
+vault_version: 1.15.6
+terraform_version: 1.6.6
+
+

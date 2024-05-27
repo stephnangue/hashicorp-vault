@@ -1,0 +1,39 @@
+pipeline {
+  agent any
+
+    stages {
+        stage('Quality Test') {
+            steps{
+                echo "Running Quality tests"
+            }
+        }
+        stage('Unit Test') {
+            steps{
+                echo "Running Unit tests"
+            }
+        }
+        stage('Security Test') {
+            steps{
+                echo "Running Security tests"
+            }          
+        }
+        stage('Build') {
+            steps{
+                echo "Building artifact"
+            }          
+        }
+        stage('Push') {
+            steps{
+                echo "Storing artifact"
+            }          
+        }
+        stage('Trigger CD') {
+            environment {
+                VAULT_TOKEN = credentials('autounseal-token')
+            }
+            steps{
+                echo ${VAULT_TOKEN}
+            }          
+        }
+    }
+}

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+while ! curl --output /dev/null --silent --head --fail http://127.0.0.1:8200; do
+  sleep 0.5 && echo -n .
+done
+
+ROOT_TOKEN=_ROOT_TOKEN
+
+KEY_1=_KEY_1_VALUE
+KEY_2=_KEY_2_VALUE
+KEY_3=_KEY_3_VALUE
+
+if [ $ROOT_TOKEN = "_ROOT_TOKEN" ]
+then
+  echo "Do not unseal"
+else
+  curl -H 'Content-Type: application/json' -X PUT -d '{"key":"'${KEY_1}'"}' http://127.0.0.1:8200/v1/sys/unseal
+  curl -H 'Content-Type: application/json' -X PUT -d '{"key":"'${KEY_2}'"}' http://127.0.0.1:8200/v1/sys/unseal
+  curl -H 'Content-Type: application/json' -X PUT -d '{"key":"'${KEY_3}'"}' http://127.0.0.1:8200/v1/sys/unseal
+fi

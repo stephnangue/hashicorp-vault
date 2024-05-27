@@ -1,0 +1,12 @@
+peers:
+  - "vault-n1.{{ domain_name }}"
+  - "vault-n2.{{ domain_name }}"
+  - "vault-n3.{{ domain_name }}"
+cluster_name: test-cluster
+log_level: TRACE
+vault_user: vault
+vault_bin_dir: /opt/vault/bin
+vault_conf_dir: /opt/vault/conf
+vault_data_dir: /opt/vault/data
+vault_certs_dir: /opt/vault/certs
+vault_client_ca_file: /etc/pki/tls/certs/ca-cundle.crt
