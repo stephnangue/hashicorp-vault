@@ -19,7 +19,7 @@ pipeline {
                 AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
             }
             steps{
-                ansiblePlaybook credentialsId: 'aws-private-key', playbook: 'Lab-02/vault/haproxy_configure.yml'
+                ansiblePlaybook playbook: 'Lab-02/vault/haproxy_configure.yml', colorized: true, credentialsId: 'aws-private-key', disableHostKeyChecking: true
             }
         }
         stage('Security Test') {
