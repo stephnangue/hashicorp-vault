@@ -24,19 +24,9 @@
       when: ec2_list.instances|length > 0
       loop: "{{ ec2_list['instances'] | flatten(levels=1) }}"
 
-    - name: Get ec2 bastion info
-      ec2_instance_info:
-        region: "{{ region }}"
-        filters:
-          "tag:stack": "{{ stack_name }}"
-          "tag:app": "bastion"
-          instance-state-name: [ "running" ]
-      register: bastion
-
 - name: Configure Haproxy
   become: yes
   hosts: haproxy
-  serial: 1
 
   tasks:
     - name: Stop haproxy service
