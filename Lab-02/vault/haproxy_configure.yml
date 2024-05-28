@@ -37,8 +37,6 @@
   become: yes
   hosts: haproxy
   serial: 1
-  vars:
-    ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
 
   tasks:
     - name: Stop haproxy service

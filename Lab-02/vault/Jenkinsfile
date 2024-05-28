@@ -20,9 +20,9 @@ pipeline {
             }
             steps{
                 dir('Lab-02/vault') {
-                    sh '''
-                        ansible-playbook haproxy_configure.yml
-                    '''
+                    ansiblePlaybook('haproxy_configure.yml') {
+                        credentialsId('aws-private-key')
+                    }
                 }
             }
         }
