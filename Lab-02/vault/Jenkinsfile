@@ -20,7 +20,7 @@ pipeline {
                 ANSIBLE_HOST_KEY_CHECKING = "False"
             }
             steps{
-                ansiblePlaybook playbook: 'Lab-02/vault/haproxy_configure.yml', colorized: true, credentialsId: 'aws-private-key'
+                ansiblePlaybook playbook: 'Lab-02/vault/haproxy_configure.yml', colorized: true, credentialsId: 'aws-test'
             }
         }
         stage('Security Test') {
