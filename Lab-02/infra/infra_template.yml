@@ -44,7 +44,10 @@ Parameters:
     Description: Public subnet where to deploy bastion host
     Type: AWS::EC2::Subnet::Id
   ProxySubnetID:
-     Description: Private subnet where to deploy nginx
+     Description: Private subnet where to deploy haproxy and identity
+     Type: AWS::EC2::Subnet::Id 
+  VaultSubnetID:
+     Description: Private subnet where to deploy vault nodes
      Type: AWS::EC2::Subnet::Id 
 
 Mappings:
@@ -265,3 +268,69 @@ Resources:
           Value: "ipa_client"
         - Key: "node_name"
           Value: "haproxy"
+
+  Vault01Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref BasicInstanceType
+      SecurityGroupIds:
+        - !GetAtt SSHSecurityGroup.GroupId
+        - !GetAtt VaultSecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
+      SubnetId: !Ref VaultSubnetID
+      Tags:
+        - Key: "Name"
+          Value: "Vault-Node-1"
+        - Key: "app"
+          Value: "vault"
+        - Key: "deploy"
+          Value: "ansible"
+        - Key: "type"
+          Value: "ipa_client"
+        - Key: "node_name"
+          Value: "vault-n1"
+
+  Vault02Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref BasicInstanceType
+      SecurityGroupIds:
+        - !GetAtt SSHSecurityGroup.GroupId
+        - !GetAtt VaultSecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
+      SubnetId: !Ref VaultSubnetID
+      Tags:
+        - Key: "Name"
+          Value: "Vault02"
+        - Key: "app"
+          Value: "vault"
+        - Key: "deploy"
+          Value: "ansible"
+        - Key: "type"
+          Value: "ipa_client"
+        - Key: "node_name"
+          Value: "vault-n2"
+
+  Vault03Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref BasicInstanceType
+      SecurityGroupIds:
+        - !GetAtt SSHSecurityGroup.GroupId
+        - !GetAtt VaultSecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
+      SubnetId: !Ref VaultSubnetID
+      Tags:
+        - Key: "Name"
+          Value: "Vault03"
+        - Key: "app"
+          Value: "vault"
+        - Key: "deploy"
+          Value: "ansible"
+        - Key: "type"
+          Value: "ipa_client"
+        - Key: "node_name"
+          Value: "vault-n3"

@@ -1,18 +1,49 @@
 ---
-- name: Configure Vault using Terraform
+- name: Build the inventory
   hosts: localhost
   gather_facts: false
   connection: local
-  vars:
-    terraform_binary: "/usr/local/bin/terraform"
-    terraform_project: "terraform/vault/dev/"
-
-  environment:
-    VAULT_ADDR: "https://vault.{{ domain_name }}"
-    VAULT_TOKEN: "{{ root_token }}"
 
   tasks:
-    - name: Configure vault
+    - name: Get ec2 instances info
+      ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          "tag:stack": "{{ stack_name }}"
+          instance-state-name: [ "running" ]
+      register: ec2_list
+
+    - name: Add instances to inventory
+      add_host:
+        name: "{{ item.tags.app }}.{{ domain_name }}"
+        ansible_user: ec2-user
+        ansible_host: "{{ item.private_ip_address }}"
+        host_key_checking: false
+        groups: "aws,{{ item.tags.type }},{{ item.tags.app }}"
+      no_log: true
+      when: ec2_list.instances|length > 0
+      loop: "{{ ec2_list['instances'] | flatten(levels=1) }}"
+
+- name: Configure the devops platform
+  hosts: devops
+  tags: devops
+  gather_facts: false
+  become: true
+  vars:
+    terraform_binary: "/usr/bin/terraform"
+    terraform_project: "/tmp/vault/dev/"
+
+  environment:
+    VAULT_ADDR: "https://vqult.{{ domain_name }}"
+    VAULT_TOKEN: "{{ hostvars[groups['ipa_server'][0]].root_token.stdout }}"
+
+  tasks:   
+    - name: Copy vault terraform config
+      copy:
+        src: vault
+        dest: /tmp/
+
+    - name: Configure vault cluster with terraform
       terraform:
         binary_path: "{{ terraform_binary }}"
         project_path: "{{ terraform_project }}"
@@ -21,3 +52,4 @@
           domain_name: "{{ domain_name }}"
           ldap_all_dc: "{{ ldap_all_dc }}"
           ldap_bind_pass: "{{ vault_bind_user_password }}"
+      register: apply

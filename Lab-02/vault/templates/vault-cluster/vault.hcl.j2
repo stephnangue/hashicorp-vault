@@ -32,6 +32,22 @@ listener "tcp" {
   tls_disable = true
 }
 
+seal "transit" {
+  address            = "https://identity.{{ domain_name }}:8200"
+  token              = "$VAULT_UNSEAL_TOKEN"
+  disable_renewal    = "false"
+
+  key_name           = "autounseal"
+  mount_path         = "transit/"
+
+  tls_ca_cert        = "{{ vault_client_ca_file }}"
+  tls_client_cert    = "{{ vault_certs_dir }}/cert.pem"
+  tls_client_key     = "{{ vault_certs_dir }}/key.pem"
+  tls_server_name    = "identity.{{ domain_name }}"
+  tls_skip_verify    = "false"
+}
+
+
 storage "raft" {
   path = "{{ vault_data_dir }}/"
 {% for peer in peers if peer == ansible_fqdn %}

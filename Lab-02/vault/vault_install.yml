@@ -1,5 +1,5 @@
 ---
-- name: Download Vault and construct the inventory
+- name: Download Vault and build the inventory
   hosts: localhost
   gather_facts: false
   connection: local
@@ -30,21 +30,10 @@
       when: ec2_list.instances|length > 0
       loop: "{{ ec2_list['instances'] | flatten(levels=1) }}"
 
-    - name: Get ec2 bastion info
-      ec2_instance_info:
-        region: "{{ region }}"
-        filters:
-          "tag:stack": "{{ stack_name }}"
-          "tag:app": "bastion"
-          instance-state-name: [ "running" ]
-      register: bastion
-
 - name: Install Vault
   become: yes
-  hosts: vault
+  hosts: "{{ node }}"
   serial: 1
-  vars:
-    ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
 
   tasks:
     - name: Stop all services
@@ -137,21 +126,6 @@
         - {src: "{{ keys_dir }}/{{ inventory_hostname }}.key", dest: "{{ vault_certs_dir }}/key.pem"}
         - {src: "{{ certs_dir }}/{{ inventory_hostname }}.crt", dest: "{{ vault_certs_dir }}/cert.pem"}
 
-    - name: Clean Vault data
-      shell: /bin/rm -rf {{ vault_data_dir }}/*
-      when: erase_data
-
-    - name: Deploy vault-unseal.sh
-      template:
-        src: "{{ item.src_file }}"
-        dest: "{{ item.dest_file }}"
-        owner: "{{ item.user }}"
-        group: "{{ item.group }}"
-        mode: a+x
-      with_items:
-        - {src_file: "vault-cluster/vault-unseal.sh.j2", dest_file: "{{ vault_bin_dir }}/vault-unseal.sh", user: "{{ vault_user }}", group: "{{ vault_user }}"}
-      when: seal_type == "shamir" and erase_data
-
     - name: Start all services
       systemd:
         state: started
@@ -172,81 +146,12 @@
         url: http://127.0.0.1:8200/v1/sys/init
         method: POST
         return_content: yes
-        body: "{ \"secret_shares\": 3, \"secret_threshold\": 3 }"
+        body: "{ \"secret_shares\": 5, \"secret_threshold\": 3 }"
         body_format: json
         validate_certs: no
         status_code: [200, 400]
         headers:
           Content-type: "application/json"
-      register: vault_init
-      when: seal_type == "shamir" and erase_data
-
-    - name: "Unseal the vault stet 1 / 3"
-      uri:
-        url: http://127.0.0.1:8200/v1/sys/unseal
-        method: POST
-        return_content: yes
-        body_format: json
-        body: 
-          key: "{{ vault_init['json']['keys'][0] }}"
-        validate_certs: no
-        headers:
-          Content-type: "application/json"
-      when: seal_type == "shamir" and erase_data
-
-    - name: Unseal the vault stet 2 / 3
-      uri:
-        url: http://127.0.0.1:8200/v1/sys/unseal
-        method: POST
-        return_content: yes
-        body_format: json
-        body: 
-          key: "{{ vault_init['json']['keys'][1] }}"
-        validate_certs: no
-        headers:
-          Content-type: "application/json"
-      when: seal_type == "shamir" and erase_data
-
-    - name: Unseal the vault stet 3 / 3
-      uri:
-        url: http://127.0.0.1:8200/v1/sys/unseal
-        method: POST
-        return_content: yes
-        body_format: json
-        body: 
-          key: "{{ vault_init['json']['keys'][2] }}"
-        validate_certs: no
-        headers:
-          Content-type: "application/json"
-      when: seal_type == "shamir" and erase_data
-
-    - name: Populate vault-unseal.sh with root token
-      lineinfile:
-        dest: "{{ vault_bin_dir }}/vault-unseal.sh"
-        regexp: "^ROOT_TOKEN"
-        line: "ROOT_TOKEN={{ vault_init['json']['root_token'] }}"
-      when: seal_type == "shamir" and erase_data
-
-    - name: Populate vault-unseal.sh with key_1
-      lineinfile:
-        dest: "{{ vault_bin_dir }}/vault-unseal.sh"
-        regexp: "^KEY_1"
-        line: "KEY_1={{ vault_init['json']['keys'][0] }}"
-      when: seal_type == "shamir" and erase_data
-
-    - name: Populate vault-unseal.sh with key_2
-      lineinfile:
-        dest: "{{ vault_bin_dir }}/vault-unseal.sh"
-        regexp: "^KEY_2"
-        line: "KEY_2={{ vault_init['json']['keys'][1] }}"
-      when: seal_type == "shamir" and erase_data
-
-    - name: Populate vault-unseal.sh with key_3
-      lineinfile:
-        dest: "{{ vault_bin_dir }}/vault-unseal.sh"
-        regexp: "^KEY_3"
-        line: "KEY_3={{ vault_init['json']['keys'][2] }}"
-      when: seal_type == "shamir" and erase_data
       
     - name: Check that vault is unsealed
       uri:

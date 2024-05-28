@@ -21,6 +21,7 @@
           SSHLocation: "{{ ssh_location }}"
           PublicSubnetID: "{{ public_subnet_id }}"
           ProxySubnetID: "{{ proxy_subnet_id }}"
+          VaultSubnetID: "{{ vault_subnet_id }}"
         tags:
           stack: "{{ stack_name }}"
 
@@ -549,7 +550,7 @@
     ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
     terraform_binary: "/usr/bin/terraform"
     terraform_project: "/tmp/vault-seal/dev/"
-    aws_credential: "{{ lookup('file', aws_credentials_file) }}"
+  #  aws_credential: "{{ lookup('file', aws_credentials_file) }}"
 
   environment:
     VAULT_ADDR: "https://identity.{{ domain_name }}:8200"
