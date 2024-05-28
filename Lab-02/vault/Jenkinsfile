@@ -15,8 +15,8 @@ pipeline {
         }
         stage('Configure Haproxy') {
             environment {
-                AWS_ACCESS_KEY_ID = "AKIA5FTZFX6LFCUJI54F"
-                AWS_SECRET_ACCESS_KEY = "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"
+                AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
+                AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
             }
             steps{
                 dir('Lab-02/vault') {

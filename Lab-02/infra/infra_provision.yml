@@ -549,12 +549,13 @@
     ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
     terraform_binary: "/usr/bin/terraform"
     terraform_project: "/tmp/vault-seal/dev/"
+    aws_credential: "{{ lookup('file', aws_credentials_file) }}"
 
   environment:
     VAULT_ADDR: "https://identity.{{ domain_name }}:8200"
     VAULT_TOKEN: "{{ hostvars[groups['ipa_server'][0]].root_token.stdout }}"
 
-  tasks:
+  tasks:   
     - name: Copy vault-seal terraform config
       copy:
         src: vault-seal

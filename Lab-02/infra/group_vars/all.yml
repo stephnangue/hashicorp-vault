@@ -4,6 +4,7 @@ public_subnet_id: subnet-0b8d3a0120330fa30
 proxy_subnet_id: subnet-067768e07ae2dcfb6
 ssh_location: 0.0.0.0/0
 aws_key: /Users/stephanenangue/Downloads/bastion_aws_key_pair.pem
+aws_credentials_file: /Users/stephanenangue/.aws/credentials
 
 ####### Variables NOT to modify #######
 region: us-east-1

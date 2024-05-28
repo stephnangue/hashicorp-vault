@@ -15,6 +15,16 @@ credentials:
           id: "autounseal-token"
           scope: GLOBAL
           secret: "{{ vault_autounseal_token }}"
+      - string:
+          description: "aws access key id"
+          id: "aws-access-key-id"
+          scope: GLOBAL
+          secret: "{{ aws_credential | regex_search('^aws_access_key_id *=*.*', multiline=True) | regex_replace('.*= *(.*)$', '\\1') }}"
+      - string:
+          description: "aws secret access key"
+          id: "aws-secret-access-key"
+          scope: GLOBAL
+          secret: "{{ aws_credential | regex_search('^aws_secret_access_key *=*.*', multiline=True) | regex_replace('.*= *(.*)$', '\\1') }}"
 jenkins:
   agentProtocols:
   - "JNLP4-connect"
