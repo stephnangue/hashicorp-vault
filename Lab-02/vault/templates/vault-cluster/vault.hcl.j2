@@ -34,7 +34,7 @@ listener "tcp" {
 
 seal "transit" {
   address            = "https://identity.{{ domain_name }}:8200"
-  token              = "$VAULT_UNSEAL_TOKEN"
+  token              = "{{ lookup('ansible.builtin.env', 'VAULT_UNSEAL_TOKEN') }}"
   disable_renewal    = "false"
 
   key_name           = "autounseal"
