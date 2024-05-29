@@ -147,7 +147,7 @@
         body: "{ \"secret_shares\": 5, \"secret_threshold\": 3 }"
         body_format: json
         validate_certs: no
-        status_code: [200, 400]
+        status_code: [200]
         headers:
           Content-type: "application/json"
       
@@ -155,11 +155,11 @@
       uri:
         url: http://127.0.0.1:8200/v1/sys/seal-status
         method: GET
-        status_code: 200
+        status_code: [200]
         headers:
           Content-type: "application/json"
       register: this
-      until: this.status == 200
+      until: this.json.sealed == false
       retries: 5
       delay: 5
 
@@ -167,7 +167,7 @@
       uri:
         url: "http://127.0.0.1:8200/v1/sys/health?standbyok=true&perfstandbyok=true&drsecondarycode=200"
         method: GET
-        status_code: 200
+        status_code: [200]
         headers:
           Content-type: "application/json"
       register: health_check
