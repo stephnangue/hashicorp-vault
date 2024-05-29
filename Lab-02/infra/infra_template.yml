@@ -281,7 +281,7 @@ Resources:
       SubnetId: !Ref VaultSubnetID
       Tags:
         - Key: "Name"
-          Value: "Vault-Node-1"
+          Value: "Vault01"
         - Key: "app"
           Value: "vault"
         - Key: "deploy"
