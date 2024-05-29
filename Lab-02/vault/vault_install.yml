@@ -21,7 +21,7 @@
 
     - name: Add instances to inventory
       add_host:
-        name: "{{ item.tags.app }}.{{ domain_name }}"
+        name: "{{ item.tags.node_name }}.{{ domain_name }}"
         ansible_user: ec2-user
         ansible_host: "{{ item.private_ip_address }}"
         host_key_checking: false
