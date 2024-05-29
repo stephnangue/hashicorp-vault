@@ -160,7 +160,7 @@
           Content-type: "application/json"
       register: this
       until: this.json.sealed == false
-      retries: 5
+      retries: 10
       delay: 5
 
     - name: Check that vault is healthy
