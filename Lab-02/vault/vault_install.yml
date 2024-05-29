@@ -58,16 +58,14 @@
     - name: Create vault user
       user: 
         name: "{{ item.user_name }}"
-        uid: "{{ item.user_id }}"
       with_items:
-        - {user_name: "{{ vault_user }}", user_id: 999}
+        - {user_name: "{{ vault_user }}"}
 
     - name: Create vault group
       group: 
         name: "{{ item.group_name }}"
-        gid: "{{ item.group_id }}"
       with_items:
-        - {group_name: "{{ vault_user }}", group_id: 999}
+        - {group_name: "{{ vault_user }}"}
 
     - name: Create directories for vault
       file:
