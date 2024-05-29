@@ -41,7 +41,7 @@ pipeline {
         }
         stage('Configure Vault cluster') {
             steps{
-                echo "${VAULT_TOKEN}"
+                echo "test"
             }          
         }
     }
