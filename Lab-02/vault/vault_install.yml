@@ -32,7 +32,7 @@
 
 - name: Install Vault
   become: yes
-  hosts: "{{ vault_node }}"
+  hosts: vault
   serial: 1
 
   tasks:

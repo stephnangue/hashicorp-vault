@@ -24,12 +24,12 @@ pipeline {
                 ansiblePlaybook playbook: 'Lab-02/vault/haproxy_configure.yml', colorized: true, credentialsId: 'aws-private-key'
             }
         }
-        stage('Install Vault cluster') {
+        stage('Install Vault') {
             steps{
                 ansiblePlaybook playbook: 'Lab-02/vault/vault_install.yml', colorized: true, credentialsId: 'aws-private-key'
             }          
         }
-        stage('Configure Vault cluster') {
+        stage('Configure Vault') {
             steps{
                 echo "${VAULT_TOKEN}"
             }          
