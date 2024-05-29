@@ -38,6 +38,16 @@
       register: result_systemd_stop
       failed_when: "result_systemd_stop is failed and 'Could not find the requested service' not in result_systemd_stop.msg"
 
+    - name: Configure the firewall 
+      ansible.builtin.shell: | 
+        firewall-cmd --permanent --add-port={8080/tcp,443/tcp}
+        firewall-cmd --permanent --add-service={http,https}
+        firewall-cmd --reload
+        firewall-cmd --runtime-to-permanent
+      register: firewall
+      failed_when: firewall.rc != 0 and firewall.rc != 1
+      changed_when: firewall.rc == 0
+
     - name: Generate Haproxy certificate
       ansible.builtin.shell: | 
         cat {{ certs_dir }}/{{ inventory_hostname }}.crt {{ keys_dir }}/{{ inventory_hostname }}.key > {{ haproxy_cert_dir }}/cert.pem
@@ -48,7 +58,7 @@
     - name: Generate Haproxy configuration file
       template:
         src: haproxy/haproxy.conf.j2
-        dest: /etc/haproxy/haproxy.conf
+        dest: /etc/haproxy/haproxy.cfg
         owner: root
         group: root
         mode: '0644'
@@ -57,7 +67,7 @@
 
     - name: Test Haproxy config file
       ansible.builtin.shell: | 
-        haproxy -f /etc/haproxy/haproxy.conf -c
+        haproxy -f /etc/haproxy/haproxy.cfg -c
       register: config_check
       failed_when: "'errors' in config_check.stderr"  
 
