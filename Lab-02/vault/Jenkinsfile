@@ -26,17 +26,17 @@ pipeline {
         }
         stage('Install vault-n1') {
             steps{
-                ansiblePlaybook playbook: 'Lab-02/vault/vault_install.yml', colorized: true, credentialsId: 'aws-private-key', extras: '-e node="vault-n1"'
+                ansiblePlaybook playbook: 'Lab-02/vault/vault_install.yml', colorized: true, credentialsId: 'aws-private-key', extras: '-e vault_node="vault-n1"'
             }          
         }
         stage('Install vault-n2') {
             steps{
-                ansiblePlaybook playbook: 'Lab-02/vault/vault_install.yml', colorized: true, credentialsId: 'aws-private-key', extras: '-e node="vault-n2"'
+                ansiblePlaybook playbook: 'Lab-02/vault/vault_install.yml', colorized: true, credentialsId: 'aws-private-key', extras: '-e vault_node="vault-n2"'
             }          
         }
         stage('Install vault-n3') {
             steps{
-                ansiblePlaybook playbook: 'Lab-02/vault/vault_install.yml', colorized: true, credentialsId: 'aws-private-key', extras: '-e node="vault-n"'
+                ansiblePlaybook playbook: 'Lab-02/vault/vault_install.yml', colorized: true, credentialsId: 'aws-private-key', extras: '-e vault_node="vault-n"'
             }          
         }
         stage('Configure Vault cluster') {
