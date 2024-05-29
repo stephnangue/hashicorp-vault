@@ -91,13 +91,13 @@ Resources:
       GroupDescription: Enable Web acces from Bastion Security Group
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: 8200
-          ToPort: 8200
+          FromPort: 8201
+          ToPort: 8201
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          SourceSecurityGroupId: !GetAtt BastionSecurityGroup.GroupId
+          CidrIp: 0.0.0.0/0
 
   IdentitySecurityGroup:
     Type: AWS::EC2::SecurityGroup
