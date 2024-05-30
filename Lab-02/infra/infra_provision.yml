@@ -229,12 +229,13 @@
 
     - name: Generate a TLS Certificate and a Private Key 
       ansible.builtin.shell: |
-        ipa-getcert request -K host/{{ inventory_hostname }} -k {{ keys_dir }}/{{ inventory_hostname }}.key -f {{ certs_dir }}/{{ inventory_hostname }}.crt -D {{ inventory_hostname }} -N {{ inventory_hostname }}
+        ipa-getcert request -K host/{{ inventory_hostname }} -k {{ keys_dir }}/{{ inventory_hostname }}.key -f {{ certs_dir }}/{{ inventory_hostname }}.crt -D {{ inventory_hostname }}  -N {{ inventory_hostname }}
       register: generate
       failed_when: generate.rc != 0 and generate.rc != 2
       changed_when: generate.rc == 0
+      when: ansible_hostname != "haproxy"
 
-- name: Add a new DNS record for Vault
+- name: Generate a TLS Certificate for Haproxy
   hosts: haproxy
   gather_facts: true
   tags: identity
@@ -252,6 +253,21 @@
         record_name: vault
         record_type: 'A'
         record_value: "{{ ansible_host }}"
+
+    - name: Add a host alias for Haproxy
+      ansible.builtin.shell: | 
+        kinit admin <<< {{ ipadm_password }}
+        ipa host-add-principal {{ inventory_hostname }} host/vault.{{ domain_name }}@{{ domain_name | upper }}
+      register: install
+      failed_when: install.rc != 0 and install.rc != 1 and install.rc != 3
+      changed_when: install.rc == 0
+
+    - name: Generate a TLS Certificate and a Private Key 
+      ansible.builtin.shell: |
+        ipa-getcert request -K host/{{ inventory_hostname }} -k {{ keys_dir }}/{{ inventory_hostname }}.key -f {{ certs_dir }}/{{ inventory_hostname }}.crt -D {{ inventory_hostname }} -D vault.{{ domain_name }}  -N {{ inventory_hostname }}
+      register: generate
+      failed_when: generate.rc != 0 and generate.rc != 2
+      changed_when: generate.rc == 0
 
 - name: Download Terraform on devops platform
   hosts: devops

@@ -44,11 +44,3 @@ backend vault
 {% for node_name, node_dns in backend.items() %}
     server {{ node_name }} {{ node_dns }}:443 check ssl
 {% endfor %}
-
-listen stats
-    mode http
-    bind 172.0.0.1:8080
-
-    stats enable
-    stats uri /
-    stats admin if TRUE
