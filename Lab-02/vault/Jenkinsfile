@@ -24,21 +24,11 @@ pipeline {
                 ansiblePlaybook playbook: 'Lab-02/vault/haproxy_configure.yml', colorized: true, credentialsId: 'aws-private-key'
             }
         }
-        stage('Install vault-n1') {
+        stage('Install Vault cluster') {
             steps{
-                ansiblePlaybook playbook: 'Lab-02/vault/vault_install.yml', colorized: true, credentialsId: 'aws-private-key', extras: '-e vault_node="vault-n1"'
-            }          
+                ansiblePlaybook playbook: 'Lab-02/vault/vault_install.yml', colorized: true, credentialsId: 'aws-private-key'
         }
-        stage('Install vault-n2') {
-            steps{
-                ansiblePlaybook playbook: 'Lab-02/vault/vault_install.yml', colorized: true, credentialsId: 'aws-private-key', extras: '-e vault_node="vault-n2"'
-            }          
-        }
-        stage('Install vault-n3') {
-            steps{
-                ansiblePlaybook playbook: 'Lab-02/vault/vault_install.yml', colorized: true, credentialsId: 'aws-private-key', extras: '-e vault_node="vault-n3"'
-            }          
-        }
+
         stage('Configure Vault cluster') {
             steps{
                 echo "test"
