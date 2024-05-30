@@ -149,6 +149,10 @@
         status_code: [200,400]
         headers:
           Content-type: "application/json"
+      register: out
+
+    - debug:
+        var: out
       
     - name: Check that vault is unsealed
       uri:
