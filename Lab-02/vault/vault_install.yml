@@ -144,7 +144,7 @@
         url: http://127.0.0.1:8200/v1/sys/init
         method: POST
         return_content: yes
-        body: "{ \"stored_shares\": 3}"
+        body: "{ \"stored_shares\": 3, \"recovery_shares\": 5, \"recovery_threshold\": 3}"
         body_format: json
         status_code: [200]
         headers:
