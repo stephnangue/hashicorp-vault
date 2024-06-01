@@ -212,7 +212,10 @@
     VAULT_ADDR: "https://vault.{{ domain_name }}"
     VAULT_TOKEN: "{{ root_token }}"
 
-  tasks:   
+  tasks:
+    - debug:
+        var: root_token 
+          
     - name: Copy vault terraform config
       copy:
         src: vault-first-config
