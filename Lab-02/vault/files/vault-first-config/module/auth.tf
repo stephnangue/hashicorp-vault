@@ -1,6 +1,6 @@
 
 resource "vault_auth_backend" "configurator" {
-  type = "configurator"
+  type = "approle"
 }
 
 resource "vault_approle_auth_backend_role" "configurator" {

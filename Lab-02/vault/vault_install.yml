@@ -217,15 +217,18 @@
       copy:
         src: vault-first-config
         dest: /tmp/
+      when: root_token is defined
 
     - name: Delete Terraform state file if necessary
       file:
         path: /tmp/vault-first-config/dev/terraform.tfstate
         state: absent
+      when: root_token is defined
 
     - name: Create the configurator approle
       terraform:
         binary_path: "{{ terraform_binary }}"
         project_path: "{{ terraform_project }}"
         force_init: true
+      when: root_token is defined
 
