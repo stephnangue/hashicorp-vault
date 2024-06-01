@@ -154,7 +154,7 @@
     - name: Send the root token to localhost
       set_fact:
         root_token: "{{ init_out['json']['root_token'] }}"
-        delegate_to: devops
+      delegate_to: localhost
       when: "'root_token' in init_out.content"
       
     - name: Check that vault is unsealed
