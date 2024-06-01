@@ -213,9 +213,6 @@
     VAULT_TOKEN: "{{ root_token }}"
 
   tasks:
-    - debug:
-        var: root_token 
-          
     - name: Copy vault terraform config
       copy:
         src: vault-first-config

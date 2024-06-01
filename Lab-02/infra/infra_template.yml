@@ -179,7 +179,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-          SourceSecurityGroupId: !GetAtt BastionSecurityGroup.GroupId
+          CidrIp: 0.0.0.0/0
 
 
   BastionInstance:
