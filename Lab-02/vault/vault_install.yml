@@ -200,7 +200,7 @@
 
 - name: Create the configurator approle if necessary
   hosts: localhost
-  gather_facts: false
+  gather_facts: yes
   connection: local
   become: true
   vars:
