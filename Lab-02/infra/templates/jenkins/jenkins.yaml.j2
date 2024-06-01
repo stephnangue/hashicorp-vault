@@ -16,6 +16,16 @@ credentials:
           scope: GLOBAL
           secret: "{{ vault_autounseal_token }}"
       - string:
+          description: "deploy role id"
+          id: "deploy-role-id"
+          scope: GLOBAL
+          secret: "{{ deploy_role_id }}"
+      - string:
+          description: "deploy secret id"
+          id: "deploy-secret-id"
+          scope: GLOBAL
+          secret: "{{ deploy_secret_id }}"
+      - string:
           description: "aws access key id"
           id: "aws-access-key-id"
           scope: GLOBAL

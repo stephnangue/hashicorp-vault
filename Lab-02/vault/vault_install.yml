@@ -149,10 +149,13 @@
         status_code: [200,400]
         headers:
           Content-type: "application/json"
-      register: out
+      register: init_out
 
-    - debug:
-        var: out
+    - name: Send the root token to localhost
+      set_fact:
+        root_token: "{{ init_out['json']['root_token'] }}"
+        delegate_to: localhost
+      when: "'root_token' in init_out.content"
       
     - name: Check that vault is unsealed
       uri:
@@ -193,3 +196,35 @@
           - "The Vault leader_cluster_address is: {{ leader.json.leader_address }}"
           - "The Vault leader Url is: {{ leader.json.leader_address }}"
           - "The installed version of Vault is : {{ health_check.json.version }}"
+
+
+- name: Create the configurator approle if necessary
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  become: true
+  vars:
+    terraform_binary: "/usr/bin/terraform"
+    terraform_project: "/tmp/vault-first-config/dev/"
+
+  environment:
+    VAULT_ADDR: "https://vault.{{ domain_name }}"
+    VAULT_TOKEN: "{{ root_token }}"
+
+  tasks:   
+    - name: Copy vault terraform config
+      copy:
+        src: vault-first-config
+        dest: /tmp/
+
+    - name: Delete Terraform state file if necessary
+      file:
+        path: /tmp/vault-first-config/dev/terraform.tfstate
+        state: absent
+
+    - name: Create the configurator approle
+      terraform:
+        binary_path: "{{ terraform_binary }}"
+        project_path: "{{ terraform_project }}"
+        force_init: true
+

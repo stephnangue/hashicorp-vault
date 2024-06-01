@@ -18,6 +18,21 @@ resource "vault_ldap_auth_backend" "ldap" {
 
 resource "vault_ldap_auth_backend_group" "group" {
     groupname = "secops"
-    policies  = [vault_policy.admin.name]
+    policies  = ["default", vault_policy.admin.name]
     backend   = vault_ldap_auth_backend.ldap.path
+}
+
+resource "vault_auth_backend" "approle" {
+  type = "approle"
+}
+
+resource "vault_approle_auth_backend_role" "deploy" {
+  backend        = vault_auth_backend.approle.path
+  role_name      = "deploy"
+  token_policies = ["default", vault_policy.deploy.name]
+}
+
+resource "vault_approle_auth_backend_role_secret_id" "deploy" {
+  backend   = vault_auth_backend.approle.path
+  role_name = vault_approle_auth_backend_role.deploy.role_name
 }

@@ -50,10 +50,6 @@ path "sys/storage/raft/*" {
     capabilities = ["read", "list"]
 }
 
-path "secret/data/*" {
-    capabilities = ["create", "read", "update", "delete", "list", "sudo"]
-}
-
 path "sys/audit/*" {
     capabilities = ["read", "list", "sudo"]
 }

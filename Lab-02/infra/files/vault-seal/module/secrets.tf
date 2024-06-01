@@ -18,6 +18,8 @@ resource "vault_token" "transit_token" {
   period    = "24h"
 }
 
-output "autounseal_token" {
-  value = vault_token.transit_token.client_token
+resource "vault_mount" "deploy" {
+  path        = "deploy"
+  type        = "kv-v2"
+  description = "Store secrets used to configure Vault clusters"
 }

@@ -31,16 +31,16 @@
   become: true
   vars:
     terraform_binary: "/usr/bin/terraform"
-    terraform_project: "/tmp/vault/dev/"
+    terraform_project: "/tmp/vault-cluster-config/dev/"
 
   environment:
-    VAULT_ADDR: "https://vqult.{{ domain_name }}"
+    VAULT_ADDR: "https://vault.{{ domain_name }}"
     VAULT_TOKEN: "{{ hostvars[groups['ipa_server'][0]].root_token.stdout }}"
 
   tasks:   
     - name: Copy vault terraform config
       copy:
-        src: vault
+        src: vault-cluster-config
         dest: /tmp/
 
     - name: Configure vault cluster with terraform

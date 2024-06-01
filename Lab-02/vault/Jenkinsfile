@@ -5,6 +5,8 @@ pipeline {
         AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
         ANSIBLE_CONFIG = "Lab-02/vault/ansible.cfg"
         VAULT_UNSEAL_TOKEN = credentials('autounseal-token')
+        DEPLOY_ROLE_ID = credentials('deploy-role-id')
+        DEPLOY_SECRET_ID = credentials('deploy-secret-id')
     }
 
     stages {

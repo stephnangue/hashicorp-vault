@@ -31,5 +31,7 @@ firefox_binary: /Applications/Firefox.app/Contents/MacOS/firefox
 
 vault_version: 1.15.6
 terraform_version: 1.6.6
+# Erase data and Init vault if true
+erase_vaultseal_data: false
 
 

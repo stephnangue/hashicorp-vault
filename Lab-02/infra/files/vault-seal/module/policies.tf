@@ -8,3 +8,8 @@ resource "vault_policy" "autounseal" {
   name   = "autounseal"
   policy = file("${path.module}/policies/autounseal.hcl")
 }
+
+resource "vault_policy" "deploy" {
+  name   = "deploy"
+  policy = file("${path.module}/policies/deploy.hcl")
+}

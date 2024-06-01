@@ -15,3 +15,13 @@ output "autounseal_token" {
   value = module.vault.autounseal_token
   sensitive = true
 }
+
+output "deploy_role_id" {
+  value = module.vault.deploy_role_id
+  sensitive = true
+}
+
+output "deploy_secret_id" {
+  value = module.vault.deploy_secret_id
+  sensitive = true
+}
