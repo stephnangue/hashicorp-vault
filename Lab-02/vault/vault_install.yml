@@ -203,7 +203,7 @@
   hosts: localhost
   gather_facts: no
   connection: local
-  become: true
+
   vars:
     terraform_binary: "/usr/bin/terraform"
     terraform_project: "/tmp/vault-first-config/dev/"
