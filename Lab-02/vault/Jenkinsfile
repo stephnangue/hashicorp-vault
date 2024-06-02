@@ -34,7 +34,7 @@ pipeline {
 
         stage('Configure Vault cluster') {
             steps{
-                echo "test"
+                ansiblePlaybook playbook: 'Lab-02/vault/vault_configure.yml', colorized: true, credentialsId: 'aws-private-key'
             }          
         }
     }
