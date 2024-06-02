@@ -9,7 +9,7 @@ module "vault" {
 }
 
 output "configurator_role_id" {
-  value = module.vault.configurator_secret_id
+  value = module.vault.configurator_role_id
   sensitive = true
 }
 
