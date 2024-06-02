@@ -25,6 +25,14 @@ credentials:
           id: "deploy-secret-id"
           scope: GLOBAL
           secret: "{{ deploy_secret_id }}"
+      - vaultAppRoleCredential:
+          description: "Credential for deploy approle"
+          id: "deploy-approle-id"
+          path: "approle"
+          roleId: "{{ deploy_role_id }}"
+          scope: GLOBAL
+          secretId: "{{ deploy_secret_id }}"
+          usePolicies: false
       - string:
           description: "aws access key id"
           id: "aws-access-key-id"

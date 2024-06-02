@@ -1,41 +1,63 @@
 ---
-- name: Build the inventory
+- name: Login to configurator approle
   hosts: localhost
   gather_facts: false
   connection: local
 
   tasks:
-    - name: Get ec2 instances info
-      ec2_instance_info:
-        region: "{{ region }}"
-        filters:
-          "tag:stack": "{{ stack_name }}"
-          instance-state-name: [ "running" ]
-      register: ec2_list
+    - set_fact:
+        deploy_role_id: "{{ lookup('env', 'DEPLOY_ROLE_ID') }}"
+        deploy_secret_id: "{{ lookup('env', 'DEPLOY_SECRET_ID') }}"
 
-    - name: Add instances to inventory
-      add_host:
-        name: "{{ item.tags.app }}.{{ domain_name }}"
-        ansible_user: ec2-user
-        ansible_host: "{{ item.private_ip_address }}"
-        host_key_checking: false
-        groups: "aws,{{ item.tags.type }},{{ item.tags.app }}"
-      no_log: true
-      when: ec2_list.instances|length > 0
-      loop: "{{ ec2_list['instances'] | flatten(levels=1) }}"
+    - name: Login to deploy approle
+      uri:
+        url: "https://identity.{{ domain_name }}:8200/v1/auth/approle/login"
+        method: POST
+        return_content: yes
+        body_format: json
+        body: 
+          role_id: "{{ deploy_role_id }}"
+          secret_id: "{{ deploy_secret_id }}"
+        headers:
+          Content-type: "application/json"
+      register: login_deploy
 
-- name: Configure the devops platform
-  hosts: devops
-  tags: devops
+    - name: Read the configurator credentials
+      uri:
+        url: "https://identity.{{ domain_name }}:8200/v1/deploy/data/VAULT/{{ cluster_name }}"
+        method: GET
+        body_format: json
+        headers:
+          Content-type: "application/json"
+          X-Vault-Token: "{{ login_deploy.json.auth.client_token. }}"
+      register: configurator_creds
+
+    - name: Login to configurator approle
+      uri:
+        url: "https://vault.{{ domain_name }}/v1/auth/configurator/login"
+        method: POST
+        return_content: yes
+        body_format: json
+        body: 
+          role_id: "{{ configurator_creds.json.data.data.configurator_role_id }}"
+          secret_id: "{{ configurator_creds.json.data.data.configurator_secret_id }}"
+        headers:
+          Content-type: "application/json"
+      register: login_configurator
+
+
+- name: Configure vault cluster
+  hosts: localhost
   gather_facts: false
-  become: true
+  connection: local
+
   vars:
     terraform_binary: "/usr/bin/terraform"
     terraform_project: "/tmp/vault-cluster-config/dev/"
 
   environment:
     VAULT_ADDR: "https://vault.{{ domain_name }}"
-    VAULT_TOKEN: "{{ hostvars[groups['ipa_server'][0]].root_token.stdout }}"
+    VAULT_TOKEN: "{{ login_configurator.json.auth.client_token }}"
 
   tasks:   
     - name: Copy vault terraform config

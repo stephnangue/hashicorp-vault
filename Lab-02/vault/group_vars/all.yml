@@ -4,6 +4,8 @@ stack_name: VaultInfra
 certs_dir: /etc/pki/tls/certs
 keys_dir: /etc/pki/tls/private
 domain_name: openlab.net
+ldap_all_dc: 'dc=openlab,dc=net'
+vault_bind_user_password: SecretVaultBin@3421d
 vault_version: 1.15.6
 cluster_name: test_cluster
 
