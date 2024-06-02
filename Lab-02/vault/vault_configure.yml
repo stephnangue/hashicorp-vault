@@ -34,7 +34,7 @@
 
     - name: Login to configurator approle
       uri:
-        url: "https://vault.{{ domain_name }}/v1/auth/configurator/login"
+        url: "https://vault.{{ domain_name }}/v1/auth/approle/login"
         method: POST
         return_content: yes
         body_format: json
