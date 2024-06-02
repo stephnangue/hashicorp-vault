@@ -199,7 +199,7 @@
           - "The installed version of Vault is : {{ health_check.json.version }}"
 
 
-- name: Create the configurator approle if necessary
+- name: Create the configurator approle
   hosts: localhost
   gather_facts: no
   connection: local
@@ -213,6 +213,10 @@
     VAULT_TOKEN: "{{ root_token }}"
 
   tasks:
+    - set_fact:
+        deploy_role_id: "{{ lookup('env', 'DEPLOY_ROLE_ID') }}"
+        deploy_secret_id: "{{ lookup('env', 'DEPLOY_SECRET_ID') }}"
+
     - name: Copy vault terraform config
       copy:
         src: vault-first-config
@@ -231,4 +235,33 @@
         project_path: "{{ terraform_project }}"
         force_init: true
       when: root_token is defined
+      register: apply
 
+    - name: Login to deploy approle
+      uri:
+        url: "https://identity.{{ domain_name }}:8200/v1/auth/approle/login"
+        method: POST
+        return_content: yes
+        body_format: json
+        body: 
+          role_id: "{{ deploy_role_id }}"
+          secret_id: "{{ deploy_secret_id }}"
+        headers:
+          Content-type: "application/json"
+      register: login
+      when: root_token is defined
+
+    - name: Publish the configurator approle credentials
+      uri:
+        url: "https://identity.{{ domain_name }}:8200/v1/deploy/data/VAULT/{{ cluster_name }}"
+        method: POST
+        return_content: yes
+        body_format: json
+        body: 
+          data: 
+            configurator_role_id: "{{ apply.outputs.configurator_role_id.value }}"
+            configurator_secret_id: "{{ apply.outputs.configurator_secret_id.value }}"
+        headers:
+          Content-type: "application/json"
+          X-Vault-Token: "{{ login.json.auth.client_token }}"
+      when: root_token is defined

@@ -5,6 +5,7 @@ certs_dir: /etc/pki/tls/certs
 keys_dir: /etc/pki/tls/private
 domain_name: openlab.net
 vault_version: 1.15.6
+cluster_name: test_cluster
 
 
 
