@@ -29,7 +29,7 @@
         body_format: json
         headers:
           Content-type: "application/json"
-          X-Vault-Token: "{{ login_deploy.json.auth.client_token. }}"
+          X-Vault-Token: "{{ login_deploy.json.auth.client_token }}"
       register: configurator_creds
 
     - name: Login to configurator approle
