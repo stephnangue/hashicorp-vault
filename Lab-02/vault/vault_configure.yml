@@ -65,6 +65,11 @@
         src: vault-cluster-config
         dest: /tmp/
 
+    - name: Delete Terraform state file if necessary
+      file:
+        path: /tmp/vault-cluster-config/dev/terraform.tfstate
+        state: absent
+
     - name: Configure vault cluster with terraform
       terraform:
         binary_path: "{{ terraform_binary }}"
