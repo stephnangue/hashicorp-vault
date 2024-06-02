@@ -6,6 +6,7 @@ vault_subnet_id: subnet-0e409f479bf7ef1a8
 ssh_location: 0.0.0.0/0
 aws_key: /Users/stephanenangue/Downloads/bastion_aws_key_pair.pem
 aws_credentials_file: /Users/stephanenangue/.aws/credentials
+vault_bucket: vault-bucket-905418489750
 
 ####### Variables NOT to modify #######
 region: us-east-1

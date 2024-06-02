@@ -61,6 +61,7 @@ Mappings:
       HAPROXY: ami-025376614f26314d2
 
 Resources:
+
   BastionSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -180,7 +181,6 @@ Resources:
           FromPort: 443
           ToPort: 443
           CidrIp: 0.0.0.0/0
-
 
   BastionInstance:
     Type: AWS::EC2::Instance

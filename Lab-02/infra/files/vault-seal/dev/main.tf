@@ -1,4 +1,7 @@
 terraform {
+  backend "s3" {
+    key = "Lab02/tfstate/infra/seal.tfstate"
+  }
 }
 
 provider "vault" {

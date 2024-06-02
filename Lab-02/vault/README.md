@@ -48,3 +48,4 @@ setsebool -P httpd_can_network_relay 1 -P
 eval $(ssh-agent -s)
 ssh-add /Users/stephanenangue/Downloads/bastion_aws_key_pair.pem
 
+
