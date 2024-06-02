@@ -210,7 +210,7 @@
 
   environment:
     VAULT_ADDR: "https://vault.{{ domain_name }}"
-    VAULT_TOKEN: "{{ root_token }}"
+    VAULT_TOKEN: "{{ root_token | default('empty') }}"
 
   tasks:
     - set_fact:
