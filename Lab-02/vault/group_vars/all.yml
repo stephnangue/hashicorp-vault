@@ -8,6 +8,6 @@ ldap_all_dc: 'dc=openlab,dc=net'
 vault_bind_user_password: SecretVaultBin@3421d
 vault_version: 1.15.6
 cluster_name: test_cluster
-
+vault_bucket: vault-bucket-905418489750
 
 
