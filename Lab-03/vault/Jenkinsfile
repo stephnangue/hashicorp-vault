@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+    environment {
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
+        ANSIBLE_CONFIG = "Lab-02/vault/ansible.cfg"
+        VAULT_UNSEAL_TOKEN = credentials('autounseal-token')
+        DEPLOY_ROLE_ID = credentials('deploy-role-id')
+        DEPLOY_SECRET_ID = credentials('deploy-secret-id')
+    }
+
+    stages {
+        stage('Install requirements') {
+            steps{
+                dir('Lab-02/vault') {
+                    sh '''
+                      ansible-galaxy install -r requirements/ansible-galaxy.yml
+                      python -m ensurepip --upgrade
+                      python -m pip install -r requirements/python.txt
+                    '''
+                }
+            }
+        }
+        stage('Configure Haproxy') {
+            steps{
+                ansiblePlaybook playbook: 'Lab-02/vault/haproxy_configure.yml', colorized: true, credentialsId: 'aws-private-key'
+            }
+        }
+        stage('Install Vault cluster') {
+            steps{
+                ansiblePlaybook playbook: 'Lab-02/vault/vault_install.yml', colorized: true, credentialsId: 'aws-private-key', extras: '-e vault_version="1.16.2"'
+            }          
+        }
+
+        stage('Configure Vault cluster') {
+            steps{
+                ansiblePlaybook playbook: 'Lab-02/vault/vault_configure.yml', colorized: true, credentialsId: 'aws-private-key'
+            }          
+        }
+    }
+}

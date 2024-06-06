@@ -1,0 +1,91 @@
+---
+- name: Build the inventory
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: Get ec2 instances info
+      ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          "tag:stack": "{{ stack_name }}"
+          instance-state-name: [ "running" ]
+      register: ec2_list
+
+    - name: Add instances to inventory
+      add_host:
+        name: "{{ item.tags.app }}.{{ domain_name }}"
+        ansible_user: ec2-user
+        ansible_host: "{{ item.private_ip_address }}"
+        host_key_checking: false
+        groups: "aws,{{ item.tags.type }},{{ item.tags.app }},{{ item.tags.node_name }}"
+      no_log: true
+      when: ec2_list.instances|length > 0
+      loop: "{{ ec2_list['instances'] | flatten(levels=1) }}"
+
+- name: Configure Haproxy
+  become: yes
+  hosts: haproxy
+
+  tasks:
+    - name: Stop all services
+      systemd:
+        state: stopped
+        name: "{{ item.service }}"
+      with_items:
+        - {service: haproxy}
+        - {service: telegraf}
+      register: result_systemd_stop
+      failed_when: "result_systemd_stop is failed and 'Could not find the requested service' not in result_systemd_stop.msg"
+
+    - name: Configure the firewall 
+      ansible.builtin.shell: | 
+        firewall-cmd --permanent --add-port={8080/tcp,443/tcp}
+        firewall-cmd --permanent --add-service={http,https}
+        firewall-cmd --reload
+        firewall-cmd --runtime-to-permanent
+      register: firewall
+      failed_when: firewall.rc != 0 and firewall.rc != 1
+      changed_when: firewall.rc == 0
+
+    - name: Generate Haproxy certificate
+      ansible.builtin.shell: | 
+        cat {{ certs_dir }}/{{ inventory_hostname }}.crt {{ keys_dir }}/{{ inventory_hostname }}.key > {{ haproxy_cert_dir }}/cert.pem
+      register: generate
+      failed_when: generate.rc != 0 and generate.rc != 2
+      changed_when: generate.rc == 0
+
+    - name: Generate Haproxy configuration file
+      template:
+        src: haproxy/haproxy.conf.j2
+        dest: /etc/haproxy/haproxy.cfg
+        owner: root
+        group: root
+        mode: '0644'
+      vars:
+        server_name: "{{ inventory_hostname }}" 
+
+    - name: Generate Telegraf configuration file
+      template:
+        src: haproxy/telegraf.conf.j2
+        dest: /etc/telegraf/telegraf.conf
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Test Haproxy config file
+      ansible.builtin.shell: | 
+        haproxy -f /etc/haproxy/haproxy.cfg -c
+      register: config_check
+      failed_when: "'errors' in config_check.stderr"  
+
+    - name: Start all services
+      systemd:
+        state: started
+        enabled: yes
+        daemon_reload: yes
+        name: "{{ item.service }}"
+      with_items:
+        - {service: haproxy}
+        - {service: telegraf}    

@@ -1,0 +1,807 @@
+---
+- name: Provision the infrastructure
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tags: 
+    - provision
+
+  tasks:
+    - name: Create cfn stack
+      cloudformation:
+        stack_name: "{{ stack_name }}"
+        region: "{{ region }}"
+        state: present
+        template: "infra_template.yml"
+        template_parameters:
+          KeyName: "{{ keypair }}"
+          BastionInstanceType: "{{ bastion_instance_type }}"
+          IdentityInstanceType: "{{ identity_instance_type }}"
+          SSHLocation: "{{ ssh_location }}"
+          PublicSubnetID: "{{ public_subnet_id }}"
+          ProxySubnetID: "{{ proxy_subnet_id }}"
+          VaultSubnetID: "{{ vault_subnet_id }}"
+        tags:
+          stack: "{{ stack_name }}"
+
+    - name: Donwload and unzip vault
+      unarchive:
+        src: https://releases.hashicorp.com/vault/{{ vault_version }}/vault_{{ vault_version }}_linux_amd64.zip
+        dest: /tmp
+        remote_src: yes
+        mode: a+x
+
+- name: Build the inventory
+  hosts: localhost
+  gather_facts: false
+  connection: local
+  tags: 
+    - inventory
+
+  tasks:
+    - name: Get ec2 instances info
+      ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          "tag:stack": "{{ stack_name }}"
+          instance-state-name: [ "running" ]
+      register: ec2_list
+
+    - name: Add instances to inventory
+      add_host:
+        name: "{{ item.tags.node_name }}.{{ domain_name }}"
+        ansible_user: ec2-user
+        ansible_host: "{{ item.private_ip_address }}"
+        host_key_checking: false
+        groups: "aws,{{ item.tags.type }},{{ item.tags.app }},{{ item.tags.node_name }}"
+      no_log: true
+      when: ec2_list.instances|length > 0
+      loop: "{{ ec2_list['instances'] | flatten(levels=1) }}"
+
+    - name: Get ec2 bastion info
+      ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          "tag:stack": "{{ stack_name }}"
+          "tag:app": "bastion"
+          instance-state-name: [ "running" ]
+      register: bastion
+
+- name: Check instances availability
+  hosts: aws
+  gather_facts: false
+  tags: provision
+  vars:
+    ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
+  tasks:
+    - name: wait for instances to become available
+      wait_for_connection:
+
+- name: Configure the identity server
+  hosts: ipa_server
+  gather_facts: false
+  tags: identity
+  become: true
+  vars:
+    ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
+
+  tasks:
+    - name: Set a hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+
+    - name: Clean the /etc/hosts file
+      ansible.builtin.lineinfile:
+        path: /etc/hosts
+        regexp: '^127\.0\.0\.1'
+        line: ""
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Configure the firewall and deactivate ipv6
+      ansible.builtin.shell: | 
+        firewall-cmd --permanent --add-port={80/tcp,443/tcp,389/tcp,636/tcp,88/tcp,88/udp,464/tcp,464/udp,53/tcp,53/udp,123/udp,8200/tcp}
+        firewall-cmd --permanent --add-service={freeipa-ldap,freeipa-ldaps,dns,http,https}
+        firewall-cmd --reload
+        firewall-cmd --runtime-to-permanent
+        sysctl net.ipv6.conf.all.disable_ipv6=0
+        sysctl net.ipv6.conf.lo.disable_ipv6=0
+      register: firewall
+      failed_when: firewall.rc != 0 and firewall.rc != 1
+      changed_when: firewall.rc == 0
+
+    - name: Install ipaserver
+      ansible.builtin.shell: | 
+        ipa-server-install --unattended \
+        --no-host-dns --no-ntp --mkhomedir --setup-dns --no-reverse --no-forwarders \
+        --hostname "{{ inventory_hostname }}" \
+        --domain "{{ domain_name }}" \
+        --realm "{{ domain_name | upper }}" \
+        --ds-password "{{ ipadm_password }}" \
+        --admin-password "{{ ipaadmin_password }}"
+      register: install
+      failed_when: install.rc != 0 and install.rc != 1
+      changed_when: install.rc == 0
+      async: 600
+      poll: 30
+
+    - name: Download the CA Certificate
+      ansible.builtin.fetch:
+        src: /root/cacert.p12
+        dest: "{{ ca_cert_download_dir }}/cacert.p12"
+        flat: yes
+
+
+    - name: Make sure we have a bind user named "vault" 
+      ansible.builtin.shell: |
+        kinit admin <<<{{ ipaadmin_password }}
+        ldapmodify -Y GSSAPI <<EOF
+        dn: uid=vault,cn=sysaccounts,cn=etc,{{ ldap_all_dc }}
+        changetype: add
+        objectclass: account
+        objectclass: simplesecurityobject
+        uid: vault
+        userPassword: {{ vault_bind_user_password }}
+        passwordExpirationTime: 20380119031407Z
+        nsIdleTimeout: 0
+        EOF
+      register: resultat
+      failed_when: resultat.rc != 0 and resultat.rc != 1 and resultat.rc != 68
+      changed_when: resultat.rc == 0
+
+    - name: Ensure group "secops" is present
+      community.general.ipa_group:
+        name: secops
+        description: Group for users in charge operating Hashicorp Vault
+        state: present
+        ipa_user: admin
+        ipa_pass: "{{ ipaadmin_password }}"
+
+    - name: Ensure "vaultops" is present and always reset password
+      community.general.ipa_user:
+        name: vaultops
+        state: present
+        password: vaultops
+        update_password: on_create
+        givenname: Vault
+        sn: Operator
+        loginshell: /bin/bash
+        ipa_user: admin
+        ipa_pass: "{{ ipaadmin_password }}"
+        mail: "vaultops@{{ domain_name }}"
+
+    - name: Ensure that group "secops" only contains the user "vaultops"
+      community.general.ipa_group:
+        name: secops
+        user:
+        - vaultops
+        ipa_user: admin
+        ipa_pass: "{{ ipaadmin_password }}"
+
+- name: Configure the identity clients
+  hosts: ipa_client
+  gather_facts: true
+  tags: identity
+  become: true
+  vars:
+    ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
+
+  tasks:
+    - name: Set a hostname
+      ansible.builtin.hostname:
+        name: "{{ inventory_hostname }}"
+
+    - name: Generate the /etc/hosts file
+      template:
+        src: etc/hosts.j2
+        dest: /etc/hosts
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Generate the /etc/resolv.conf file      
+      template:
+        src: etc/default-resolv.conf.j2
+        dest: /etc/resolv.conf
+        owner: root
+        group: root
+        mode: '0644'
+      vars:
+        domain: "{{ domain_name }}"
+        internal_dns_resolver: "{{ hostvars[groups['ipa_server'][0]]['ansible_host'] }}"
+
+    - name: Install ipaclient
+      ansible.builtin.shell: | 
+        ipa-client-install --unattended \
+        --mkhomedir --no-ntp \
+        --domain "{{ domain_name }}" \
+        --realm "{{ domain_name | upper }}" \
+        --principal admin \
+        --password "{{ ipaadmin_password }}" \
+        --hostname {{ inventory_hostname }}
+      register: install
+      failed_when: install.rc != 0 and install.rc != 1 and install.rc != 3
+      changed_when: install.rc == 0
+      async: 120
+      poll: 5
+
+    - name: Generate a TLS Certificate and a Private Key 
+      ansible.builtin.shell: |
+        ipa-getcert request -K host/{{ inventory_hostname }} -k {{ keys_dir }}/{{ inventory_hostname }}.key -f {{ certs_dir }}/{{ inventory_hostname }}.crt -D {{ inventory_hostname }}  -N {{ inventory_hostname }}
+      register: generate
+      failed_when: generate.rc != 0 and generate.rc != 2
+      changed_when: generate.rc == 0
+      when: 
+        - ansible_hostname != "haproxy"
+        - ansible_hostname != "metric"
+
+    - name: Add a DNS Record for Vault
+      community.general.ipa_dnsrecord:
+        ipa_host: "identity.{{ domain_name }}"
+        ipa_pass: "{{ ipaadmin_password }}"
+        state: present
+        zone_name: "{{ domain_name }}"
+        record_name: vault
+        record_type: 'A'
+        record_value: "{{ ansible_host }}"
+      when: ansible_hostname == "haproxy"
+
+    - name: Add a host alias for Haproxy
+      ansible.builtin.shell: | 
+        kinit admin <<< {{ ipadm_password }}
+        ipa host-add-principal {{ inventory_hostname }} host/vault.{{ domain_name }}@{{ domain_name | upper }}
+      register: install
+      failed_when: install.rc != 0 and install.rc != 1 and install.rc != 3
+      changed_when: install.rc == 0
+      when: ansible_hostname == "haproxy"
+
+    - name: Generate a TLS Certificate for Haproxy
+      ansible.builtin.shell: |
+        ipa-getcert request -K host/{{ inventory_hostname }} -k {{ keys_dir }}/{{ inventory_hostname }}.key -f {{ certs_dir }}/{{ inventory_hostname }}.crt -D {{ inventory_hostname }} -D vault.{{ domain_name }}  -N {{ inventory_hostname }}
+      register: generate
+      failed_when: generate.rc != 0 and generate.rc != 2
+      changed_when: generate.rc == 0
+      when: ansible_hostname == "haproxy"
+
+    - name: Add a DNS Record for InfluxDB
+      community.general.ipa_dnsrecord:
+        ipa_host: "identity.{{ domain_name }}"
+        ipa_pass: "{{ ipaadmin_password }}"
+        state: present
+        zone_name: "{{ domain_name }}"
+        record_name: influxdb
+        record_type: 'A'
+        record_value: "{{ ansible_host }}"
+      when: ansible_hostname == "metric"
+
+    - name: Add a host alias for Metric
+      ansible.builtin.shell: | 
+        kinit admin <<< {{ ipadm_password }}
+        ipa host-add-principal {{ inventory_hostname }} host/influxdb.{{ domain_name }}@{{ domain_name | upper }}
+      register: install
+      failed_when: install.rc != 0 and install.rc != 1 and install.rc != 3
+      changed_when: install.rc == 0
+      when: ansible_hostname == "metric"
+  
+    - name: Generate a TLS Certificate for Metric
+      ansible.builtin.shell: |
+        ipa-getcert request -K host/{{ inventory_hostname }} -k {{ keys_dir }}/{{ inventory_hostname }}.key -f {{ certs_dir }}/{{ inventory_hostname }}.crt -D {{ inventory_hostname }} -D influxdb.{{ domain_name }}  -N {{ inventory_hostname }}
+      register: generate
+      failed_when: generate.rc != 0 and generate.rc != 2
+      changed_when: generate.rc == 0
+      when: ansible_hostname == "metric"
+
+- name: Download Terraform on devops platform
+  hosts: devops
+  tags: terraform
+  gather_facts: false
+  become: true
+  vars:
+    ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
+
+  tasks:
+    - name: Compute AWS DNS Resolver to enable internet DNS resolution
+      ansible.builtin.shell: | 
+        metadata="http://169.254.169.254/latest/meta-data"
+        mac=$(curl -s $metadata/network/interfaces/macs/ | head -n1 | tr -d '/')
+        cidr=$(curl -s $metadata/network/interfaces/macs/$mac/vpc-ipv4-cidr-block/ | cut -d '/' -f 1)
+        dns=$(echo $cidr | sed 's/.$/2/')
+        echo $dns
+      register: aws_dns_resolver
+
+    - name: Configure Internet dns resolver     
+      template:
+        src: etc/internet-resolv.conf.j2
+        dest: /etc/resolv.conf
+        owner: root
+        group: root
+        mode: '0644'
+      vars:
+        domain: "{{ domain_name }}"
+        internal_dns_resolver: "{{ hostvars[groups['ipa_server'][0]]['ansible_host'] }}"
+        internet_dns_resolver: "{{ aws_dns_resolver.stdout }}"
+
+    - name: Install packages
+      ansible.builtin.package:
+        name:
+          - unzip
+          - ansible-core
+        state: latest
+
+    - name: Check if Terraform v{{ terraform_version }} is present
+      ansible.builtin.command: "/usr/bin/terraform -version"
+      register: terraform_installed_version
+      ignore_errors: true
+      changed_when: false
+      failed_when: false
+
+    - name: Install Terraform v{{ terraform_version }}
+      ansible.builtin.unarchive:
+        src: https://releases.hashicorp.com/terraform/{{ terraform_version }}/terraform_{{ terraform_version }}_linux_amd64.zip
+        dest: /usr/bin
+        remote_src: true
+        mode: a+x
+      when: terraform_version not in ( terraform_installed_version.stdout_lines | default(['empty'], true) | first )
+
+- name: Install and configure vault-seal
+  hosts: ipa_server
+  tags: vault_seal
+  gather_facts: false
+  become: true
+  vars:
+    ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
+
+  tasks:
+    - name: Generate a TLS Certificate and a Private Key 
+      ansible.builtin.shell: |
+        ipa-getcert request -K host/{{ inventory_hostname }} -k {{ keys_dir }}/{{ inventory_hostname }}.key -f {{ certs_dir }}/{{ inventory_hostname }}.crt -D {{ inventory_hostname }} -N {{ inventory_hostname }}
+      register: generate
+      failed_when: generate.rc != 0 and generate.rc != 2
+      changed_when: generate.rc == 0
+
+    - name: Stop vault service
+      systemd:
+        state: stopped
+        name: "{{ item.service }}"
+      with_items:
+        - {service: vault}
+      register: result_systemd_stop
+      failed_when: "result_systemd_stop is failed and 'Could not find the requested service' not in result_systemd_stop.msg"
+
+    - name: Create vault user
+      user: 
+        name: "{{ item.user_name }}"
+      with_items:
+        - {user_name: "{{ vault_user }}"}
+
+    - name: Create vault group
+      group: 
+        name: "{{ item.group_name }}"
+      with_items:
+        - {group_name: "{{ vault_user }}"}
+
+    - name: Create directories for vault
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ vault_user }}"
+        group: "{{ vault_user }}"
+      with_items:
+        - "{{ vault_bin_dir }}"
+        - "{{ vault_conf_dir }}"
+        - "{{ vault_certs_dir }}"
+        - "{{ vault_data_dir }}"
+
+    - name: Install vault binary
+      copy:
+        src: /tmp/vault
+        dest: "{{ vault_bin_dir }}/vault"
+        mode: a+x
+
+    - name: Deploy vault config files
+      template:
+        src: "{{ item.src_file }}"
+        dest: "{{ item.dest_file }}"
+        owner: "{{ item.user }}"
+        group: "{{ item.group }}"
+        mode: '0644'
+      with_items:
+        - {src_file: "vault-seal/vault.hcl.j2", dest_file: "{{ vault_conf_dir }}/vault.hcl", user: "{{ vault_user }}", group: "{{ vault_user }}"}
+        - {src_file: "vault-seal/vault.service.j2", dest_file: "/etc/systemd/system/vault.service", user: root, group: root}
+
+    - name: Add environment variables to ~/.bashrc
+      lineinfile:
+        dest: "~/.bashrc"
+        regexp: "^VAULT_ADDR="
+        line: "export VAULT_ADDR=http://127.0.0.1:8200"
+      become: false
+
+    - name: Add vault alias
+      lineinfile:
+        dest: "~/.bashrc"
+        line: 'alias vault="{{ vault_bin_dir }}/vault"'
+      become: false
+
+    - name: Don't log vault commands in bash history
+      lineinfile:
+        dest: "/etc/bashrc"
+        line: 'export HISTIGNORE="&:vault*"'
+
+    - name: Copy the certificate and the private key
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        remote_src: yes
+      with_items:
+        - {src: "{{ keys_dir }}/{{ inventory_hostname }}.key", dest: "{{ vault_certs_dir }}/key.pem"}
+        - {src: "{{ certs_dir }}/{{ inventory_hostname }}.crt", dest: "{{ vault_certs_dir }}/cert.pem"}
+
+    - name: Clean Vault data
+      shell: /bin/rm -rf {{ vault_data_dir }}/*
+      when: erase_vaultseal_data
+
+    - name: Deploy vault-unseal.sh
+      template:
+        src: "{{ item.src_file }}"
+        dest: "{{ item.dest_file }}"
+        owner: "{{ item.user }}"
+        group: "{{ item.group }}"
+        mode: a+x
+      with_items:
+        - {src_file: "vault-seal/vault-unseal.sh.j2", dest_file: "{{ vault_bin_dir }}/vault-unseal.sh", user: "{{ vault_user }}", group: "{{ vault_user }}"}
+      when: erase_vaultseal_data 
+
+    - name: Start Vault service
+      systemd:
+        state: started
+        enabled: yes
+        daemon_reload: yes
+        name: "{{ item.service }}"
+      with_items:
+        - {service: vault}     
+
+    - name: Wait for vault to be available
+      wait_for:
+        host: 127.0.0.1
+        port: 8200
+        timeout: 60
+
+    - name: Init vault
+      uri:
+        url: http://127.0.0.1:8200/v1/sys/init
+        method: POST
+        return_content: yes
+        body: "{ \"secret_shares\": 3, \"secret_threshold\": 3 }"
+        body_format: json
+        validate_certs: no
+        status_code: [200, 400]
+        headers:
+          Content-type: "application/json"
+      register: vault_init
+      when: erase_vaultseal_data
+
+    - name: "Unseal the vault stet 1 / 3"
+      uri:
+        url: http://127.0.0.1:8200/v1/sys/unseal
+        method: POST
+        return_content: yes
+        body_format: json
+        body: 
+          key: "{{ vault_init['json']['keys'][0] }}"
+        validate_certs: no
+        headers:
+          Content-type: "application/json"
+      when: erase_vaultseal_data
+
+    - name: Unseal the vault stet 2 / 3
+      uri:
+        url: http://127.0.0.1:8200/v1/sys/unseal
+        method: POST
+        return_content: yes
+        body_format: json
+        body: 
+          key: "{{ vault_init['json']['keys'][1] }}"
+        validate_certs: no
+        headers:
+          Content-type: "application/json"
+      when: erase_vaultseal_data
+
+    - name: Unseal the vault stet 3 / 3
+      uri:
+        url: http://127.0.0.1:8200/v1/sys/unseal
+        method: POST
+        return_content: yes
+        body_format: json
+        body: 
+          key: "{{ vault_init['json']['keys'][2] }}"
+        validate_certs: no
+        headers:
+          Content-type: "application/json"
+      when: erase_vaultseal_data
+
+    - name: Populate vault-unseal.sh with root token
+      lineinfile:
+        dest: "{{ vault_bin_dir }}/vault-unseal.sh"
+        regexp: "^ROOT_TOKEN"
+        line: "ROOT_TOKEN={{ vault_init['json']['root_token'] }}"
+      when: erase_vaultseal_data
+
+    - name: Populate vault-unseal.sh with key_1
+      lineinfile:
+        dest: "{{ vault_bin_dir }}/vault-unseal.sh"
+        regexp: "^KEY_1"
+        line: "KEY_1={{ vault_init['json']['keys'][0] }}"
+      when: erase_vaultseal_data
+
+    - name: Populate vault-unseal.sh with key_2
+      lineinfile:
+        dest: "{{ vault_bin_dir }}/vault-unseal.sh"
+        regexp: "^KEY_2"
+        line: "KEY_2={{ vault_init['json']['keys'][1] }}"
+      when: erase_vaultseal_data
+
+    - name: Populate vault-unseal.sh with key_3
+      lineinfile:
+        dest: "{{ vault_bin_dir }}/vault-unseal.sh"
+        regexp: "^KEY_3"
+        line: "KEY_3={{ vault_init['json']['keys'][2] }}"
+      when: erase_vaultseal_data
+      
+    - name: Check that vault is unsealed
+      uri:
+        url: http://127.0.0.1:8200/v1/sys/seal-status
+        method: GET
+        status_code: 200
+        headers:
+          Content-type: "application/json"
+      register: this
+      until: this.status == 200
+      retries: 5
+      delay: 5
+
+    - name: Check that vault is healthy
+      uri:
+        url: "http://127.0.0.1:8200/v1/sys/health?standbyok=true&perfstandbyok=true&drsecondarycode=200"
+        method: GET
+        status_code: 200
+        headers:
+          Content-type: "application/json"
+      register: health_check
+
+    - name: Display status
+      debug:
+        msg: 
+          - "The installed version of Vault is : {{ health_check.json.version }}"
+
+    - name: Read the root token from file
+      ansible.builtin.shell: |
+        root_token=$(cat {{ vault_bin_dir }}/vault-unseal.sh | grep 'ROOT_TOKEN=' | cut -d '=' -f 2)
+        echo $root_token
+      register: root_token
+
+- name: Configure the metric platform
+  hosts: metric
+  tags: metric
+  gather_facts: false
+  become: true
+  vars:
+    ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
+
+  tasks:
+    - name: Copy the certificate and the private key
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+        remote_src: yes
+        owner: grafana
+        group: grafana
+        mode: '0644'
+      with_items:
+        - {src: "{{ keys_dir }}/{{ inventory_hostname }}.key", dest: "/etc/grafana/key.pem"}
+        - {src: "{{ certs_dir }}/{{ inventory_hostname }}.crt", dest: "/etc/grafana/cert.pem"}
+
+    - name: Configure the firewall
+      ansible.builtin.shell: | 
+        firewall-cmd --permanent --add-port={3000/tcp,8086/tcp,443/tcp}
+        firewall-cmd --permanent --add-service={http,https}
+        firewall-cmd --reload
+        firewall-cmd --runtime-to-permanent
+      register: firewall
+      failed_when: firewall.rc != 0 and firewall.rc != 1
+      changed_when: firewall.rc == 0 
+
+    - name: Provision influxdb configuration
+      template:
+        src: metric/influxdb.toml.j2
+        dest: "/etc/influxdb/config.toml"
+        owner: influxdb
+        group: influxdb
+        mode: 0750  
+
+    - name: Restart influxdb service
+      systemd:
+        state: restarted
+        name: influxdb
+
+    - name: Setup influxdb
+      command: /usr/local/bin/influx setup --bucket vault_infra --org openlab -p {{ influxdb_password }} -u admin -t {{ influxdb_token }} --force
+      register: setup
+      failed_when: setup.rc != 0 and setup.rc != 1
+      changed_when: setup.rc == 0 
+
+    - name: Provision Grafana configuration
+      template:
+        src: metric/grafana.ini.j2
+        dest: "/etc/grafana/grafana.ini"
+        owner: grafana
+        group: grafana
+        mode: 0750
+
+    - name: Provision Grafana LDAP configuration
+      template:
+        src: metric/grafana_ldap.toml.j2
+        dest: "/etc/grafana/ldap.toml"
+        owner: grafana
+        group: grafana
+        mode: 0750
+
+    - name: Provision Grafana influxdb datasource configuration
+      template:
+        src: metric/grafana_datasources.yaml.j2
+        dest: "/etc/grafana/provisioning/datasources/influxdb.yaml"
+        owner: grafana
+        group: grafana
+        mode: 0750  
+
+    - name: Restart grafana-server service
+      systemd:
+        state: restarted
+        name: grafana-server
+
+    - name: Generate "nginx.conf" file
+      template:
+        src: metric/nginx.conf.j2
+        dest: "/etc/nginx/nginx.conf"
+        owner: nginx
+        group: nginx
+        mode: u=rw,g=r,o=r 
+
+    - name: Enable http network connect
+      ansible.builtin.shell: | 
+        setsebool -P httpd_can_network_connect 1 -P
+      register: firewall
+      failed_when: firewall.rc != 0 and firewall.rc != 1
+      changed_when: firewall.rc == 0 
+
+    - name: Restart Nginx service
+      service:
+        name: nginx
+        state: restarted
+        daemon_reload: true     
+
+- name: Configure the devops platform
+  hosts: devops
+  tags: devops
+  gather_facts: false
+  become: true
+  vars:
+    ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
+    terraform_binary: "/usr/bin/terraform"
+    terraform_project: "/tmp/vault-seal/dev/"
+    aws_credential: "{{ lookup('file', aws_credentials_file) }}"
+
+  environment:
+    VAULT_ADDR: "https://identity.{{ domain_name }}:8200"
+    VAULT_TOKEN: "{{ hostvars[groups['ipa_server'][0]].root_token.stdout }}"
+    AWS_ACCESS_KEY_ID: "{{ aws_credential | regex_search('^aws_access_key_id *=*.*', multiline=True) | regex_replace('.*= *(.*)$', '\\1') }}"
+    AWS_SECRET_ACCESS_KEY: "{{ aws_credential | regex_search('^aws_secret_access_key *=*.*', multiline=True) | regex_replace('.*= *(.*)$', '\\1') }}"
+
+  tasks:     
+    - name: Copy vault-seal terraform config
+      copy:
+        src: vault-seal
+        dest: /tmp/
+
+    - name: Configure vault-seal with terraform
+      terraform:
+        binary_path: "{{ terraform_binary }}"
+        project_path: "{{ terraform_project }}"
+        force_init: true
+        variables:
+          domain_name: "{{ domain_name }}"
+          ldap_all_dc: "{{ ldap_all_dc }}"
+          ldap_bind_pass: "{{ vault_bind_user_password }}"
+        backend_config:
+          region: "{{ region }}"
+          bucket: "{{ vault_bucket }}"
+      register: apply
+
+    - name: Generate "nginx.conf" file
+      template:
+        src: jenkins/nginx.conf.j2
+        dest: "/etc/nginx/nginx.conf"
+        owner: nginx
+        group: nginx
+        mode: u=rw,g=r,o=r
+
+    - name: Enable http network relay
+      ansible.builtin.shell: | 
+        setsebool -P httpd_can_network_relay 1 -P
+      register: firewall
+      failed_when: firewall.rc != 0 and firewall.rc != 1
+      changed_when: firewall.rc == 0 
+
+    - name: Restart Nginx service
+      service:
+        name: nginx
+        state: restarted
+        daemon_reload: true
+
+    - name: Ensure that "jenkins.service.d" is present
+      file:
+        owner: root
+        group: root
+        mode: 0755
+        path: /usr/lib/systemd/system/jenkins.service.d
+        state: directory
+  
+    - name: Generate "override.conf" file
+      template:
+        src: jenkins/override.conf.j2
+        dest: /usr/lib/systemd/system/jenkins.service.d/override.conf
+        owner: root
+        group: root
+        mode: 0644
+
+    - name: Generate "jenkins.yaml" file
+      template:
+        src: jenkins/jenkins.yaml.j2
+        dest: "/var/lib/jenkins/jenkins.yaml"
+        owner: jenkins
+        group: jenkins
+        mode: u=rw,g=r,o=r
+      vars:
+        vault_autounseal_token: "{{ apply.outputs.autounseal_token.value }}"
+        deploy_role_id: "{{ apply.outputs.deploy_role_id.value }}"
+        deploy_secret_id: "{{ apply.outputs.deploy_secret_id.value }}"
+
+    - name: Ensure that "reload-config.groovy" is in "/var/lib/jenkins/init.groovy.d"
+      template:
+        src: jenkins/reload_config.groovy.j2
+        dest: /var/lib/jenkins/init.groovy.d/reload-config.groovy
+        owner: jenkins
+        group: jenkins
+        mode: u=rw,g=r,o=r
+
+    - name: Restart Jenkins service
+      service:
+        name: jenkins
+        state: restarted
+        daemon_reload: true
+
+- name: Configure the Web browser
+  hosts: localhost
+  tags: browser
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: Install the CA Certificate
+      ansible.builtin.shell: |
+        certutil -D -d "{{ firefox_profile }}" -n OpenLab
+        openssl pkcs12 -in {{ ca_cert_download_dir }}/cacert.p12 -out {{ ca_cert_download_dir }}/cacert.pem -clcerts -nokeys -passin 'pass:{{ ipaadmin_password }}'
+        certutil -A -n OpenLab -t "TCu,Cuw,Tuw" -i {{ ca_cert_download_dir }}/cacert.pem -d sql:"{{ firefox_profile }}"
+        certutil -L -d "{{ firefox_profile }}"
+
+    - name: Start the ssh SOCKS tunnel
+      ansible.builtin.shell: |
+        pid=$(ps aux | grep "ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -N -D 8157" | grep -v grep | tr -s " " | cut -d " " -f 2 | head -n 1)
+        kill $pid
+        ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes  -N -D 8157 ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }} &
+
+    - name: Launch firefox with "openlab" profile
+      ansible.builtin.shell: |
+        pid=$(ps aux | grep "{{ firefox_binary }} -P openlab" |  grep -v grep | tr -s " " | cut -d " " -f 2 | head -n 1)
+        kill $pid
+        {{ firefox_binary }} -P openlab &

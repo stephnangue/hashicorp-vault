@@ -1,0 +1,39 @@
+[global_tags]
+  role = "haproxy"
+  cluster = "{{ cluster_name }}"
+
+[agent]
+  hostname = "{{ ansible_hostname }}"
+  omit_hostname = false
+
+[[outputs.influxdb_v2]]
+  urls = ["{{ influxdb_url }}"]
+  token = "{{ influxdb_token }}"
+  organization = "openlab"
+  bucket = "vault_infra"
+
+[[inputs.haproxy]]
+  servers = ["socket:/run/haproxy/api.sock"]
+
+[[inputs.cpu]]
+
+[[inputs.disk]]
+
+[[inputs.kernel]]
+
+[[inputs.linux_sysctl_fs]]
+
+[[inputs.mem]]
+
+[[inputs.chrony]]
+
+[[inputs.net]]
+  interfaces = ["eth"]
+
+[[inputs.netstat]]
+
+[[inputs.processes]]
+
+[[inputs.swap]]
+
+[[inputs.system]]

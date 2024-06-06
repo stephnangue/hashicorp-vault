@@ -1,0 +1,53 @@
+[global_tags]
+  role = "vault"
+  cluster = "{{ cluster_name }}"
+
+[agent]
+  interval = "10s"
+  hostname = "{{ ansible_hostname }}"
+  omit_hostname = false
+
+[[outputs.influxdb_v2]]
+  urls = ["{{ influxdb_url }}"]
+  token = "{{ influxdb_token }}"
+  organization = "openlab"
+  bucket = "vault_infra"
+
+[[inputs.statsd]]
+  protocol = "udp"
+  service_address = ":8125"
+  delete_gauges = true
+  delete_counters = true
+  delete_sets = true
+  detele_timings = true
+  percentiles = [90]
+  metric_separator = "."
+  allowed_pending_messages = 10000
+  percentile_mimit = 1000
+
+[[inputs.cpu]]
+
+[[inputs.disk]]
+
+[[inputs.diskio]]
+
+[[inputs.kernel]]
+
+[[inputs.linux_sysctl_fs]]
+
+[[inputs.mem]]
+
+[[inputs.chrony]]
+
+[[inputs.net]]
+  interfaces = ["eth"]
+
+[[inputs.netstat]]
+
+[[inputs.procstat]]
+
+[[inputs.processes]]
+
+[[inputs.swap]]
+
+[[inputs.system]]

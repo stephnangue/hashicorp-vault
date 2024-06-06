@@ -1,0 +1,80 @@
+---
+- name: Login to configurator approle
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - set_fact:
+        deploy_role_id: "{{ lookup('env', 'DEPLOY_ROLE_ID') }}"
+        deploy_secret_id: "{{ lookup('env', 'DEPLOY_SECRET_ID') }}"
+
+    - name: Login to deploy approle
+      uri:
+        url: "https://identity.{{ domain_name }}:8200/v1/auth/approle/login"
+        method: POST
+        return_content: yes
+        body_format: json
+        body: 
+          role_id: "{{ deploy_role_id }}"
+          secret_id: "{{ deploy_secret_id }}"
+        headers:
+          Content-type: "application/json"
+      register: login_deploy
+
+    - name: Read the configurator credentials
+      uri:
+        url: "https://identity.{{ domain_name }}:8200/v1/deploy/data/VAULT/{{ cluster_name }}"
+        method: GET
+        body_format: json
+        headers:
+          Content-type: "application/json"
+          X-Vault-Token: "{{ login_deploy.json.auth.client_token }}"
+      register: configurator_creds
+
+    - name: Login to configurator approle
+      uri:
+        url: "https://vault.{{ domain_name }}/v1/auth/approle/login"
+        method: POST
+        return_content: yes
+        body_format: json
+        body: 
+          role_id: "{{ configurator_creds.json.data.data.configurator_role_id }}"
+          secret_id: "{{ configurator_creds.json.data.data.configurator_secret_id }}"
+        headers:
+          Content-type: "application/json"
+      register: login_configurator
+
+
+- name: Configure vault cluster
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  vars:
+    terraform_binary: "/usr/bin/terraform"
+    terraform_project: "/tmp/vault-cluster-config/dev/"
+
+  environment:
+    VAULT_ADDR: "https://vault.{{ domain_name }}"
+    VAULT_TOKEN: "{{ login_configurator.json.auth.client_token }}"
+
+  tasks:   
+    - name: Copy vault terraform config
+      copy:
+        src: vault-cluster-config
+        dest: /tmp/
+
+    - name: Configure vault cluster with terraform
+      terraform:
+        binary_path: "{{ terraform_binary }}"
+        project_path: "{{ terraform_project }}"
+        force_init: true
+        variables:
+          domain_name: "{{ domain_name }}"
+          ldap_all_dc: "{{ ldap_all_dc }}"
+          ldap_bind_pass: "{{ vault_bind_user_password }}"
+        backend_config:
+          region: "{{ region }}"
+          bucket: "{{ vault_bucket }}"
+      register: apply
