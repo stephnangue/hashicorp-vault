@@ -12,7 +12,7 @@ pipeline {
     stages {
         stage('Install requirements') {
             steps{
-                dir('Lab-02/vault') {
+                dir('Lab-03/vault') {
                     sh '''
                       ansible-galaxy install -r requirements/ansible-galaxy.yml
                       python -m ensurepip --upgrade
