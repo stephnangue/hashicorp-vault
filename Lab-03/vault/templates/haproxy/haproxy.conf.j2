@@ -8,7 +8,7 @@ global
     user    haproxy
     group   haproxy
 
-    stats socket /run/haproxy.sock mode 660 level admin
+    stats socket /run/haproxy.sock mode 600 level admin
     stats timeout 2m
 
     ssl-default-bind-ciphers PROFILE=SYSTEM
@@ -44,3 +44,13 @@ backend vault
 {% for node_name, node_dns in backend.items() %}
     server {{ node_name }} {{ node_dns }}:443 check ssl
 {% endfor %}
+
+listen stats
+    mode http
+    bind 127.0.0.1:9000
+
+    http-request use-service prometheus-exporter if { path /metrics }
+
+    stats enable
+    stats uri /
+    stats adlub if TRUE
