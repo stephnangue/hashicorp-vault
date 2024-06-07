@@ -1,27 +1,9 @@
 # config file version
 apiVersion: 1
 
-# list of datasources that should be deleted from the database
-deleteDatasources:
-    - name: default_datasource
-      orgId: 1
-
 # list of datasources to insert/updata depending on what's available in the database
 datasources:
-    - name: default_datasource
-      type: influxdb
-      access: proxy
-      orgId: 1
-      url: http://localhost:8086
-      user: admin
-      database: vault_infra
-      secureJsonData:
-        password: {{ influxdb_password }}
-        token: {{ influxdb_token }}
-      version: 1
-      editable: true
-
-    - name: flux_datasource
+    - name: InfluxDB_v2_Flux
       type: influxdb
       access: proxy
       url: http://localhost:8086
@@ -29,6 +11,9 @@ datasources:
         version: Flux
         organization: openlab
         httpMode: POST
-      version: 1
+        tlsSkipVerify: true
+        defaultBucket: vault_infra
+      secureJsonData:
+        token: {{ influxdb_token }}
       editable: true
       readOnly: false
