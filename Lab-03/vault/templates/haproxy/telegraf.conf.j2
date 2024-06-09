@@ -3,7 +3,7 @@
   datacenter = "{{ region }}"
 
 [agent]
-  hostname = "{{ ansible_hostname }}"
+  hostname = "{{ inventory_hostname }}"
   omit_hostname = false
 
 [[outputs.influxdb_v2]]
