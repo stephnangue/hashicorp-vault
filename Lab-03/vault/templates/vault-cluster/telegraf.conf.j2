@@ -11,7 +11,7 @@
   collection_jitter = "0s"
   flush_interval = "10s"
   flush_jitter = "0s"
-  omit_hostname = false
+  hostname = "{{ ansible_hostname }}"
 
 [[outputs.influxdb_v2]]
   urls = ["{{ influxdb_url }}"]

@@ -3,8 +3,7 @@
   datacenter = "{{ region }}"
 
 [agent]
-  hostname = "{{ inventory_hostname }}"
-  omit_hostname = false
+  hostname = "{{ ansible_hostname }}"
 
 [[outputs.influxdb_v2]]
   urls = ["{{ influxdb_url }}"]
