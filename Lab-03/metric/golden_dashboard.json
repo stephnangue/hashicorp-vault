@@ -1,0 +1,1441 @@
+{
+    "annotations": {
+      "list": [
+        {
+          "builtIn": 1,
+          "datasource": {
+            "type": "grafana",
+            "uid": "-- Grafana --"
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "type": "dashboard"
+        }
+      ]
+    },
+    "editable": true,
+    "fiscalYearStartMonth": 0,
+    "graphTooltip": 0,
+    "id": 2,
+    "links": [],
+    "panels": [
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 0
+        },
+        "id": 12,
+        "panels": [
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "P5697886F9CA74929"
+            },
+            "description": "",
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "decimals": 0,
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                },
+                "unit": "percent"
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "usage_idle {cpu=\"cpu-total\", datacenter=\"us-east-1\", host=\"haproxy\", role=\"haproxy\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "CPU saturation"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 24,
+              "x": 0,
+              "y": 1
+            },
+            "id": 13,
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": false
+              },
+              "tooltip": {
+                "maxHeight": 600,
+                "mode": "single",
+                "sort": "none"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "influxdb",
+                  "uid": "P5697886F9CA74929"
+                },
+                "query": "from(bucket: \"vault_infra\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"cpu\")\n  |> filter(fn: (r) => r[\"_field\"] == \"usage_idle\")\n  |> filter(fn: (r) => r[\"cpu\"] == \"cpu-total\")\n  |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")\n  |> filter(fn: (r) => r[\"role\"] == \"haproxy\")\n  |> map(fn: (r) => ({r with _value: r._value * -1.0 + 100.0}))\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+                "refId": "from(bucket: \"vault_infra\")   |> range(start: v.timeRangeStart, stop: v.timeRangeStop)   |> filter(fn: (r) => r[\"host\"] == \"haproxy\")   |> filter(fn: (r) => r[\"_field\"] == \"used_percent\")   |> filter(fn: (r) => r[\"_measurement\"] == \"mem\")   |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")   |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)   |> yield(name: \"mean\")"
+              }
+            ],
+            "title": "CPU saturation",
+            "type": "timeseries"
+          },
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "P5697886F9CA74929"
+            },
+            "description": "",
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "decimals": 0,
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                },
+                "unit": "percent"
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "used_percent {datacenter=\"us-east-1\", host=\"haproxy\", role=\"haproxy\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "Memory percentage"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 24,
+              "x": 0,
+              "y": 9
+            },
+            "id": 16,
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": false
+              },
+              "tooltip": {
+                "maxHeight": 600,
+                "mode": "single",
+                "sort": "none"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "influxdb",
+                  "uid": "P5697886F9CA74929"
+                },
+                "query": "from(bucket: \"vault_infra\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"_field\"] == \"used_percent\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"mem\")\n  |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+                "refId": "from(bucket: \"vault_infra\")   |> range(start: v.timeRangeStart, stop: v.timeRangeStop)   |> filter(fn: (r) => r[\"host\"] == \"haproxy\")   |> filter(fn: (r) => r[\"_field\"] == \"used_percent\")   |> filter(fn: (r) => r[\"_measurement\"] == \"mem\")   |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")   |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)   |> yield(name: \"mean\")"
+              }
+            ],
+            "title": "Memory saturation",
+            "type": "timeseries"
+          },
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "P5697886F9CA74929"
+            },
+            "description": "",
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "decimals": 0,
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                },
+                "unit": "percent"
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "used_percent {datacenter=\"us-east-1\", device=\"devtmpfs\", fstype=\"devtmpfs\", host=\"haproxy\", mode=\"rw\", path=\"/dev\", role=\"haproxy\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "/dev"
+                    }
+                  ]
+                },
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "used_percent {datacenter=\"us-east-1\", device=\"tmpfs\", fstype=\"tmpfs\", host=\"haproxy\", mode=\"rw\", path=\"/dev/shm\", role=\"haproxy\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "/dev/shm"
+                    }
+                  ]
+                },
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "used_percent {datacenter=\"us-east-1\", device=\"tmpfs\", fstype=\"tmpfs\", host=\"haproxy\", mode=\"rw\", path=\"/run\", role=\"haproxy\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "/run"
+                    }
+                  ]
+                },
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "used_percent {datacenter=\"us-east-1\", device=\"tmpfs\", fstype=\"tmpfs\", host=\"haproxy\", mode=\"rw\", path=\"/run/user/1000\", role=\"haproxy\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "/run/user/1000"
+                    }
+                  ]
+                },
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "used_percent {datacenter=\"us-east-1\", device=\"xvda2\", fstype=\"xfs\", host=\"haproxy\", mode=\"rw\", path=\"/\", role=\"haproxy\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "/"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 24,
+              "x": 0,
+              "y": 17
+            },
+            "id": 15,
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "tooltip": {
+                "maxHeight": 600,
+                "mode": "single",
+                "sort": "none"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "influxdb",
+                  "uid": "P5697886F9CA74929"
+                },
+                "query": "from(bucket: \"vault_infra\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"_field\"] == \"used_percent\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"disk\")\n  |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+                "refId": "A"
+              }
+            ],
+            "title": "Disk saturation",
+            "type": "timeseries"
+          },
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "P5697886F9CA74929"
+            },
+            "description": "For the backend this reports the number queued without a server assigned.",
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "decimals": 0,
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                },
+                "unit": "none"
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "qcur {datacenter=\"us-east-1\", host=\"haproxy\", proxy=\"vault\", role=\"haproxy\", server=\"127.0.0.1:9000\", sv=\"BACKEND\", type=\"backend\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "Queued requests"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 24,
+              "x": 0,
+              "y": 25
+            },
+            "id": 14,
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": false
+              },
+              "tooltip": {
+                "maxHeight": 600,
+                "mode": "single",
+                "sort": "none"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "influxdb",
+                  "uid": "P5697886F9CA74929"
+                },
+                "query": "from(bucket: \"vault_infra\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"_field\"] == \"qcur\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")\n  |> filter(fn: (r) => r[\"proxy\"] == \"vault\")\n  |> filter(fn: (r) => r[\"role\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"sv\"] == \"BACKEND\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+                "refId": "A"
+              }
+            ],
+            "title": "Current queued requests",
+            "type": "timeseries"
+          }
+        ],
+        "title": "HAProxy - Saturation",
+        "type": "row"
+      },
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 1
+        },
+        "id": 11,
+        "panels": [
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "P5697886F9CA74929"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "decimals": 0,
+                "mappings": [],
+                "min": 0,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                },
+                "unit": "none"
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "http_response.4xx {datacenter=\"us-east-1\", host=\"haproxy\", proxy=\"main\", role=\"haproxy\", server=\"127.0.0.1:9000\", sv=\"FRONTEND\", type=\"frontend\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "4xx"
+                    }
+                  ]
+                },
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "http_response.5xx {datacenter=\"us-east-1\", host=\"haproxy\", proxy=\"main\", role=\"haproxy\", server=\"127.0.0.1:9000\", sv=\"FRONTEND\", type=\"frontend\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "5xx"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 9,
+              "w": 24,
+              "x": 0,
+              "y": 2
+            },
+            "id": 5,
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": true
+              },
+              "tooltip": {
+                "maxHeight": 600,
+                "mode": "single",
+                "sort": "none"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "influxdb",
+                  "uid": "P5697886F9CA74929"
+                },
+                "query": "from(bucket: \"vault_infra\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"_field\"] == \"http_response.4xx\" or r[\"_field\"] == \"http_response.5xx\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")\n  |> filter(fn: (r) => r[\"proxy\"] == \"main\")\n  |> filter(fn: (r) => r[\"role\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"sv\"] == \"FRONTEND\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+                "refId": "A"
+              }
+            ],
+            "title": "HTTP response errors",
+            "type": "timeseries"
+          },
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "P5697886F9CA74929"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "mappings": [],
+                "min": 0,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                },
+                "unit": "none"
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "ereq {datacenter=\"us-east-1\", host=\"haproxy\", proxy=\"main\", role=\"haproxy\", server=\"127.0.0.1:9000\", sv=\"FRONTEND\", type=\"frontend\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "Request errors"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 9,
+              "w": 24,
+              "x": 0,
+              "y": 11
+            },
+            "id": 10,
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": false
+              },
+              "tooltip": {
+                "maxHeight": 600,
+                "mode": "single",
+                "sort": "none"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "influxdb",
+                  "uid": "P5697886F9CA74929"
+                },
+                "query": "from(bucket: \"vault_infra\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ereq\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")\n  |> filter(fn: (r) => r[\"proxy\"] == \"main\")\n  |> filter(fn: (r) => r[\"role\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"sv\"] == \"FRONTEND\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+                "refId": "A"
+              }
+            ],
+            "title": "Request errors",
+            "type": "timeseries"
+          }
+        ],
+        "title": "HAProxy - Errors",
+        "type": "row"
+      },
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 2
+        },
+        "id": 6,
+        "panels": [
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "P5697886F9CA74929"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "mappings": [],
+                "min": 0,
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                },
+                "unit": "ms"
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "rtime {datacenter=\"us-east-1\", host=\"haproxy\", proxy=\"vault\", role=\"haproxy\", server=\"127.0.0.1:9000\", sv=\"BACKEND\", type=\"backend\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "Response time"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 9,
+              "w": 24,
+              "x": 0,
+              "y": 3
+            },
+            "id": 9,
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": false
+              },
+              "tooltip": {
+                "maxHeight": 600,
+                "mode": "single",
+                "sort": "none"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "influxdb",
+                  "uid": "P5697886F9CA74929"
+                },
+                "query": "from(bucket: \"vault_infra\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"_field\"] == \"rtime\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")\n  |> filter(fn: (r) => r[\"proxy\"] == \"vault\")\n  |> filter(fn: (r) => r[\"role\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"sv\"] == \"BACKEND\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+                "refId": "A"
+              }
+            ],
+            "title": "Average response time",
+            "type": "timeseries"
+          },
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "P5697886F9CA74929"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                },
+                "unit": "ms"
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "ctime {datacenter=\"us-east-1\", host=\"haproxy\", proxy=\"vault\", role=\"haproxy\", server=\"127.0.0.1:9000\", sv=\"BACKEND\", type=\"backend\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "Connection time"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 24,
+              "x": 0,
+              "y": 12
+            },
+            "id": 7,
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": false
+              },
+              "tooltip": {
+                "maxHeight": 600,
+                "mode": "single",
+                "sort": "none"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "influxdb",
+                  "uid": "P5697886F9CA74929"
+                },
+                "query": "from(bucket: \"vault_infra\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"_field\"] == \"ctime\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")\n  |> filter(fn: (r) => r[\"proxy\"] == \"vault\")\n  |> filter(fn: (r) => r[\"role\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"sv\"] == \"BACKEND\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+                "refId": "A"
+              }
+            ],
+            "title": "Average connect time",
+            "type": "timeseries"
+          },
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "P5697886F9CA74929"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                },
+                "unit": "ms"
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "qtime {datacenter=\"us-east-1\", host=\"haproxy\", proxy=\"vault\", role=\"haproxy\", server=\"127.0.0.1:9000\", sv=\"BACKEND\", type=\"backend\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "Queue time"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 24,
+              "x": 0,
+              "y": 20
+            },
+            "id": 8,
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": false
+              },
+              "tooltip": {
+                "maxHeight": 600,
+                "mode": "single",
+                "sort": "none"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "influxdb",
+                  "uid": "P5697886F9CA74929"
+                },
+                "query": "from(bucket: \"vault_infra\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"_field\"] == \"qtime\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")\n  |> filter(fn: (r) => r[\"proxy\"] == \"vault\")\n  |> filter(fn: (r) => r[\"role\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"sv\"] == \"BACKEND\")\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+                "refId": "A"
+              }
+            ],
+            "title": "Average queue time",
+            "type": "timeseries"
+          }
+        ],
+        "title": "HAProxy - Latency",
+        "type": "row"
+      },
+      {
+        "collapsed": true,
+        "gridPos": {
+          "h": 1,
+          "w": 24,
+          "x": 0,
+          "y": 3
+        },
+        "id": 3,
+        "panels": [
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "P5697886F9CA74929"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "fieldMinMax": false,
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                },
+                "unit": "none"
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "req_rate {datacenter=\"us-east-1\", host=\"haproxy\", proxy=\"main\", role=\"haproxy\", server=\"127.0.0.1:9000\", sv=\"FRONTEND\", type=\"frontend\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "Request rate"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 24,
+              "x": 0,
+              "y": 4
+            },
+            "id": 1,
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": false
+              },
+              "tooltip": {
+                "maxHeight": 600,
+                "mode": "single",
+                "sort": "none"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "influxdb",
+                  "uid": "P5697886F9CA74929"
+                },
+                "query": "from(bucket: \"vault_infra\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"_field\"] == \"req_rate\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")\n  |> filter(fn: (r) => r[\"proxy\"] == \"main\")\n  |> filter(fn: (r) => r[\"role\"] == \"haproxy\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> yield(name: \"last\")",
+                "refId": "A"
+              }
+            ],
+            "title": "Incoming requests per second",
+            "type": "timeseries"
+          },
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "P5697886F9CA74929"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "rate {datacenter=\"us-east-1\", host=\"haproxy\", proxy=\"main\", role=\"haproxy\", server=\"127.0.0.1:9000\", sv=\"FRONTEND\", type=\"frontend\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "Session rate"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 24,
+              "x": 0,
+              "y": 12
+            },
+            "id": 2,
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": false
+              },
+              "tooltip": {
+                "maxHeight": 600,
+                "mode": "single",
+                "sort": "none"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "influxdb",
+                  "uid": "P5697886F9CA74929"
+                },
+                "query": "from(bucket: \"vault_infra\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"_field\"] == \"rate\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")\n  |> filter(fn: (r) => r[\"proxy\"] == \"main\" or r[\"proxy\"] == \"vault\")\n  |> filter(fn: (r) => r[\"role\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"sv\"] == \"FRONTEND\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> yield(name: \"last\")",
+                "refId": "A"
+              }
+            ],
+            "title": "Incoming sessions per second",
+            "type": "timeseries"
+          },
+          {
+            "datasource": {
+              "type": "influxdb",
+              "uid": "P5697886F9CA74929"
+            },
+            "fieldConfig": {
+              "defaults": {
+                "color": {
+                  "mode": "palette-classic"
+                },
+                "custom": {
+                  "axisBorderShow": false,
+                  "axisCenteredZero": false,
+                  "axisColorMode": "text",
+                  "axisLabel": "",
+                  "axisPlacement": "auto",
+                  "barAlignment": 0,
+                  "drawStyle": "line",
+                  "fillOpacity": 0,
+                  "gradientMode": "none",
+                  "hideFrom": {
+                    "legend": false,
+                    "tooltip": false,
+                    "viz": false
+                  },
+                  "insertNulls": false,
+                  "lineInterpolation": "linear",
+                  "lineWidth": 1,
+                  "pointSize": 1,
+                  "scaleDistribution": {
+                    "type": "linear"
+                  },
+                  "showPoints": "auto",
+                  "spanNulls": false,
+                  "stacking": {
+                    "group": "A",
+                    "mode": "none"
+                  },
+                  "thresholdsStyle": {
+                    "mode": "off"
+                  }
+                },
+                "mappings": [],
+                "thresholds": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green",
+                      "value": null
+                    },
+                    {
+                      "color": "red",
+                      "value": 80
+                    }
+                  ]
+                }
+              },
+              "overrides": [
+                {
+                  "matcher": {
+                    "id": "byName",
+                    "options": "scur {datacenter=\"us-east-1\", host=\"haproxy\", proxy=\"main\", role=\"haproxy\", server=\"127.0.0.1:9000\", sv=\"FRONTEND\", type=\"frontend\"}"
+                  },
+                  "properties": [
+                    {
+                      "id": "displayName",
+                      "value": "Active sessions"
+                    }
+                  ]
+                }
+              ]
+            },
+            "gridPos": {
+              "h": 8,
+              "w": 24,
+              "x": 0,
+              "y": 20
+            },
+            "id": 4,
+            "options": {
+              "legend": {
+                "calcs": [],
+                "displayMode": "list",
+                "placement": "bottom",
+                "showLegend": false
+              },
+              "tooltip": {
+                "maxHeight": 600,
+                "mode": "single",
+                "sort": "none"
+              }
+            },
+            "targets": [
+              {
+                "datasource": {
+                  "type": "influxdb",
+                  "uid": "P5697886F9CA74929"
+                },
+                "query": "from(bucket: \"vault_infra\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"host\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"_field\"] == \"scur\")\n  |> filter(fn: (r) => r[\"_measurement\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")\n  |> filter(fn: (r) => r[\"proxy\"] == \"main\")\n  |> filter(fn: (r) => r[\"role\"] == \"haproxy\")\n  |> filter(fn: (r) => r[\"sv\"] == \"FRONTEND\")\n  |> aggregateWindow(every: v.windowPeriod, fn: last, createEmpty: false)\n  |> yield(name: \"last\")",
+                "refId": "A"
+              }
+            ],
+            "title": "Number of active sessions",
+            "type": "timeseries"
+          }
+        ],
+        "title": "HAProxy - Traffic",
+        "type": "row"
+      }
+    ],
+    "refresh": "",
+    "schemaVersion": 39,
+    "tags": [],
+    "templating": {
+      "list": []
+    },
+    "time": {
+      "from": "now-3h",
+      "to": "now"
+    },
+    "timeRangeUpdatedDuringEditOrView": false,
+    "timepicker": {},
+    "timezone": "browser",
+    "title": "Golden_dashboard",
+    "uid": "bdo9yaa1fewowf",
+    "version": 13,
+    "weekStart": ""
+  }
