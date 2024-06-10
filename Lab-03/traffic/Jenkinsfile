@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Generate Traffic') {
             steps{
-                ansiblePlaybook playbook: 'Lab-03/traffic/generate_traffic.yml', colorized: true, extras: "-e vault_token=${params.SKIP_ALL_REVIEWS}"
+                ansiblePlaybook playbook: 'Lab-03/traffic/generate_traffic.yml', colorized: true, extras: "-e vault_token=${params.VAULT_BENCHMARK_TOKEN}"
             }
         }
     }
