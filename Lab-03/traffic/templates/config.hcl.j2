@@ -1,0 +1,58 @@
+
+# Global vault-benchmark config options
+
+vault_namespace="{{ test_vault_namespace }}"
+duration = "{{ test_duration }}"
+report_mode = "terse"
+random_mounts = true
+cleanup = true
+rps = "{{ test_rps }}"
+workers = "{{ test_workers }}"
+
+test "approle_auth" "approle_auth_test1" {
+    weight = 15
+    config {
+        role {
+            role_name = "benchmark-role1"
+            token_ttl="2m"
+        }
+    }
+}
+
+test "approle_auth" "approle_test1" {
+  weight = 10
+  config {
+    role {
+      role_name         = "benchmark-role2"
+      token_ttl         = "10m"
+      token_type = "batch"
+    }
+  }
+}
+
+test "kvv2_read" "kvv2_read_test" {
+    weight = 45
+    config {
+        numkvs = 100
+    }
+}
+
+test "kvv2_write" "kvv2_write_test" {
+    weight = 20
+    config {
+        numkvs = 10
+        kvsize = 1000
+    }
+}
+
+test "ha_status" "ha_status_test_1" {
+    weight = 2
+}
+
+test "seal_status" "seal_status_test_1" {
+    weight = 3
+}
+
+test "metrics" "metrics_test_1" {
+    weight = 5
+}

@@ -209,7 +209,7 @@
 
   vars:
     terraform_binary: "/usr/bin/terraform"
-    terraform_project: "/tmp/vault-first-config/dev/"
+    terraform_project: "terraform/vault-first-config/dev/"
 
   environment:
     VAULT_ADDR: "https://vault.{{ domain_name }}"
@@ -219,12 +219,6 @@
     - set_fact:
         deploy_role_id: "{{ lookup('env', 'DEPLOY_ROLE_ID') }}"
         deploy_secret_id: "{{ lookup('env', 'DEPLOY_SECRET_ID') }}"
-
-    - name: Copy vault terraform config
-      copy:
-        src: vault-first-config
-        dest: /tmp/
-      when: root_token is defined
 
     - name: Create the configurator approle
       terraform:

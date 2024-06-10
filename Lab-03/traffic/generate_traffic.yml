@@ -46,30 +46,36 @@
       register: login_configurator
 
 
-- name: Configure vault cluster
+- name: Generate traffic
   hosts: localhost
   gather_facts: false
   connection: local
-
-  vars:
-    terraform_binary: "/usr/bin/terraform"
-    terraform_project: "terraform/vault-cluster-config/dev/"
 
   environment:
     VAULT_ADDR: "https://vault.{{ domain_name }}"
     VAULT_TOKEN: "{{ login_configurator.json.auth.client_token }}"
 
-  tasks:   
-    - name: Configure vault cluster with terraform
-      terraform:
-        binary_path: "{{ terraform_binary }}"
-        project_path: "{{ terraform_project }}"
-        force_init: true
-        variables:
-          domain_name: "{{ domain_name }}"
-          ldap_all_dc: "{{ ldap_all_dc }}"
-          ldap_bind_pass: "{{ vault_bind_user_password }}"
-        backend_config:
-          region: "{{ region }}"
-          bucket: "{{ vault_bucket }}"
-      register: apply
+  tasks:
+    - set_fact:
+        random_string: query('community.general.random_string', upper=false, numbers=false, special=false)
+
+    - name: Generate the config file   
+      template:
+        src: config.hcl.j2
+        dest: "/tmp/{{ random_string }}_config.hcl"
+        mode: '0644'
+      vars:
+        test_vault_namespace: "{{ vault_namespace }}"
+        test_duration: "{{ duration }}"
+        test_rps: "{{ rps }}"
+        test_workers: "{{ workers }}"
+
+    - name: Run the Benchmark
+      ansible.builtin.shell: | 
+        /usr/bin/vault-benchmark run -config=/tmp/{{ random_string }}_config.hcl
+      register: bench
+      failed_when: bench.rc != 0 and bench.rc != 1
+      changed_when: bench.rc == 0
+
+
+

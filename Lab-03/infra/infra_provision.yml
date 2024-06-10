@@ -344,6 +344,13 @@
         mode: a+x
       when: terraform_version not in ( terraform_installed_version.stdout_lines | default(['empty'], true) | first )
 
+    - name: Install Vault Benchmark v{{ vault_benchmark_version }}
+      ansible.builtin.unarchive:
+        src: https://releases.hashicorp.com/vault-benchmark/{{ vault_benchmark_version }}/vault-benchmark_{{ vault_benchmark_version }}_linux_amd64.zip
+        dest: /usr/bin
+        remote_src: true
+        mode: a+x
+
 - name: Install and configure vault-seal
   hosts: ipa_server
   tags: vault_seal

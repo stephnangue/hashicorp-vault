@@ -1,0 +1,8 @@
+---
+domain_name: openlab.net
+vault_namespace: root
+duration: 1h
+rps: 30
+workers: 15
+
+
