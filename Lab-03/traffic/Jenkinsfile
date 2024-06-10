@@ -2,13 +2,14 @@ pipeline {
     agent any
     environment {
         ANSIBLE_CONFIG = "Lab-03/vault/ansible.cfg"
-        DEPLOY_ROLE_ID = credentials('deploy-role-id')
-        DEPLOY_SECRET_ID = credentials('deploy-secret-id')
+    }
+    parameters {
+        string(name: 'VAULT_BENCHMARK_TOKEN', defaultValue: '', description: 'Vault token that will be used to run benchmark')
     }
     stages {
         stage('Generate Traffic') {
             steps{
-                ansiblePlaybook playbook: 'Lab-03/traffic/generate_traffic.yml', colorized: true
+                ansiblePlaybook playbook: 'Lab-03/traffic/generate_traffic.yml', colorized: true, extras: "-e vault_token=${params.SKIP_ALL_REVIEWS}"
             }
         }
     }

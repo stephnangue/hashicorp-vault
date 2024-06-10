@@ -1,51 +1,4 @@
 ---
-- name: Login to configurator approle
-  hosts: localhost
-  gather_facts: false
-  connection: local
-
-  tasks:
-    - set_fact:
-        deploy_role_id: "{{ lookup('env', 'DEPLOY_ROLE_ID') }}"
-        deploy_secret_id: "{{ lookup('env', 'DEPLOY_SECRET_ID') }}"
-
-    - name: Login to deploy approle
-      uri:
-        url: "https://identity.{{ domain_name }}:8200/v1/auth/approle/login"
-        method: POST
-        return_content: yes
-        body_format: json
-        body: 
-          role_id: "{{ deploy_role_id }}"
-          secret_id: "{{ deploy_secret_id }}"
-        headers:
-          Content-type: "application/json"
-      register: login_deploy
-
-    - name: Read the configurator credentials
-      uri:
-        url: "https://identity.{{ domain_name }}:8200/v1/deploy/data/VAULT/{{ cluster_name }}"
-        method: GET
-        body_format: json
-        headers:
-          Content-type: "application/json"
-          X-Vault-Token: "{{ login_deploy.json.auth.client_token }}"
-      register: configurator_creds
-
-    - name: Login to configurator approle
-      uri:
-        url: "https://vault.{{ domain_name }}/v1/auth/approle/login"
-        method: POST
-        return_content: yes
-        body_format: json
-        body: 
-          role_id: "{{ configurator_creds.json.data.data.configurator_role_id }}"
-          secret_id: "{{ configurator_creds.json.data.data.configurator_secret_id }}"
-        headers:
-          Content-type: "application/json"
-      register: login_configurator
-
-
 - name: Generate traffic
   hosts: localhost
   gather_facts: false
@@ -53,7 +6,7 @@
 
   environment:
     VAULT_ADDR: "https://vault.{{ domain_name }}"
-    VAULT_TOKEN: "{{ login_configurator.json.auth.client_token }}"
+    VAULT_TOKEN: "{{ vault_token }}"
 
   tasks:
     - set_fact:
