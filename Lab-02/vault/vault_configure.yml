@@ -53,18 +53,13 @@
 
   vars:
     terraform_binary: "/usr/bin/terraform"
-    terraform_project: "/tmp/vault-cluster-config/dev/"
+    terraform_project: "terraform/vault-cluster-config/dev/"
 
   environment:
     VAULT_ADDR: "https://vault.{{ domain_name }}"
     VAULT_TOKEN: "{{ login_configurator.json.auth.client_token }}"
 
   tasks:   
-    - name: Copy vault terraform config
-      copy:
-        src: vault-cluster-config
-        dest: /tmp/
-
     - name: Configure vault cluster with terraform
       terraform:
         binary_path: "{{ terraform_binary }}"
