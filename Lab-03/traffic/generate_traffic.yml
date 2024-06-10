@@ -57,7 +57,7 @@
 
   tasks:
     - set_fact:
-        random_string: query('community.general.random_string', upper=false, numbers=false, special=false)
+        random_string: "{{ query('community.general.random_string', upper=false, numbers=false, special=false) }}"
 
     - name: Generate the config file   
       template:
