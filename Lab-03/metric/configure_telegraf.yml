@@ -61,4 +61,10 @@
         daemon_reload: yes
         name: "{{ item.service }}"
       with_items:
-        - {service: telegraf}    
+        - {service: telegraf} 
+
+    - name: Install python packages
+      ansible.builtin.pip:
+        name:
+          - spintest
+          - tenacity

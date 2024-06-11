@@ -51,8 +51,8 @@ if __name__ == "__main__":
         exit_with_error = True
 
     if exit_with_error:
-        print(json.dumps({"result": 1, "env": "DEV", "service": "vault"}))
+        print(json.dumps({"result": 0, "env": "DEV", "service": "vault"}))
         sys.exit(0)
     else:
-        print(json.dumps({"result": 0, "env": "DEV", "service": "vault"}))
+        print(json.dumps({"result": 1, "env": "DEV", "service": "vault"}))
     
