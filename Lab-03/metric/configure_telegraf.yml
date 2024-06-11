@@ -20,7 +20,6 @@
         ansible_host: "{{ item.private_ip_address }}"
         host_key_checking: false
         groups: "aws,{{ item.tags.type }},{{ item.tags.app }},{{ item.tags.node_name }}"
-      no_log: true
       when: ec2_list.instances|length > 0
       loop: "{{ ec2_list['instances'] | flatten(levels=1) }}"
 
