@@ -25,14 +25,7 @@ pipeline {
         }
         stage('Deploy Grafana dashboards') {
             steps{
-                dir('Lab-03/metric/terraform') {
-                    sh '''
-                      /usr/bin/terraform init
-                      /usr/bin/terraform fmt -check
-                      /usr/bin/terraform plan -input=false -no-color
-                      /usr/bin/terraform apply -auto-approve
-                    '''
-                }
+                ansiblePlaybook playbook: 'Lab-03/metric/deploy_dashboards.yml', colorized: true
             }          
         }
     }
