@@ -6,7 +6,9 @@ terraform {
       }
    }
   backend "s3" {
+    bucket = "vault-bucket-905418489750"
     key = "Lab03/tfstate/grafana/state.tfstate"
+    region = "us-east-1"
   }
 }
 
