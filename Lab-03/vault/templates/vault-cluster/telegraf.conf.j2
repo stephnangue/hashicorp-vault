@@ -52,3 +52,12 @@
 [[inputs.swap]]
 
 [[inputs.system]]
+
+[[inputs.exec]]
+  commands = [
+    "python3 /etc/telegraf/scripts/latency.py"
+  ]
+  interval = "30s"
+  timeout = "15s"
+  name_override = "_vault_network_latency"
+  tag_keys = ["cluster"]

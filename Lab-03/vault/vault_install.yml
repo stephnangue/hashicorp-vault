@@ -56,6 +56,14 @@
       failed_when: firewall.rc != 0 and firewall.rc != 1
       changed_when: firewall.rc == 0
 
+    - name: Deploy all configuration files
+      copy:
+        src: ./files/
+        dest: /
+        owner: root
+        group: root
+        mode: preserve
+
     - name: Create vault user
       user: 
         name: "{{ item.user_name }}"

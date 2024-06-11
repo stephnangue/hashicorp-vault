@@ -101,15 +101,36 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Enable Web and api access from everywhere
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 8201
-          ToPort: 8201
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
+
+  VaultInternalClusterRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: VaultSecurityGroup
+    Properties:
+      GroupId: !GetAtt VaultSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 8201
+      ToPort: 8201
+      SourceSecurityGroupId: !GetAtt VaultSecurityGroup.GroupId
+
+  VaultClusterAPIRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: VaultSecurityGroup
+    Properties:
+      GroupId: !GetAtt VaultSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      SourceSecurityGroupId: !GetAtt VaultSecurityGroup.GroupId
+
+  VaultClientsAPIRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: VaultSecurityGroup
+    Properties:
+      GroupId: !GetAtt VaultSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      SourceSecurityGroupId: !GetAtt HaproxySecurityGroup.GroupId
 
   MetricSecurityGroup:
     Type: AWS::EC2::SecurityGroup
