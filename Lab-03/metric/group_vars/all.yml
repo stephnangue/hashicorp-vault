@@ -3,6 +3,8 @@ region: us-east-1
 stack_name: VaultInfra
 domain_name: openlab.net
 
+vault_bucket: vault-bucket-905418489750
+
 influxdb_token: 'Openlab@influx'
 influxdb_url: "https://influxdb.{{ domain_name }}"
 
