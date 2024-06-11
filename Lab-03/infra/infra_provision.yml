@@ -20,7 +20,9 @@
           SSHLocation: "{{ ssh_location }}"
           PublicSubnetID: "{{ public_subnet_id }}"
           ProxySubnetID: "{{ proxy_subnet_id }}"
-          VaultSubnetID: "{{ vault_subnet_id }}"
+          Vault01SubnetID: "{{ vault01_subnet_id }}"
+          Vault02SubnetID: "{{ vault02_subnet_id }}"
+          Vault03SubnetID: "{{ vault03_subnet_id }}"
         tags:
           stack: "{{ stack_name }}"
 

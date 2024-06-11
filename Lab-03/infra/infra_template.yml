@@ -51,9 +51,15 @@ Parameters:
   ProxySubnetID:
      Description: Private subnet where to deploy haproxy and identity
      Type: AWS::EC2::Subnet::Id 
-  VaultSubnetID:
-     Description: Private subnet where to deploy vault nodes
-     Type: AWS::EC2::Subnet::Id 
+  Vault01SubnetID:
+     Description: Private subnet where to deploy vault node1
+     Type: AWS::EC2::Subnet::Id
+  Vault02SubnetID:
+     Description: Private subnet where to deploy vault node2
+     Type: AWS::EC2::Subnet::Id
+  Vault03SubnetID:
+     Description: Private subnet where to deploy vault node3
+     Type: AWS::EC2::Subnet::Id  
 
 Mappings:
   AWSAMIRegionMap:
@@ -315,7 +321,7 @@ Resources:
         - !GetAtt VaultSecurityGroup.GroupId
       KeyName: !Ref KeyName
       ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
-      SubnetId: !Ref VaultSubnetID
+      SubnetId: !Ref Vault01SubnetID
       Tags:
         - Key: "Name"
           Value: "Vault01"
@@ -337,7 +343,7 @@ Resources:
         - !GetAtt VaultSecurityGroup.GroupId
       KeyName: !Ref KeyName
       ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
-      SubnetId: !Ref VaultSubnetID
+      SubnetId: !Ref Vault02SubnetID
       Tags:
         - Key: "Name"
           Value: "Vault02"
@@ -359,7 +365,7 @@ Resources:
         - !GetAtt VaultSecurityGroup.GroupId
       KeyName: !Ref KeyName
       ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
-      SubnetId: !Ref VaultSubnetID
+      SubnetId: !Ref Vault03SubnetID
       Tags:
         - Key: "Name"
           Value: "Vault03"
