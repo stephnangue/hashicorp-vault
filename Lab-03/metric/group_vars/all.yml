@@ -1,5 +1,6 @@
 ---
 region: us-east-1
 stack_name: VaultInfra
+domain_name: openlab.net
 
 
