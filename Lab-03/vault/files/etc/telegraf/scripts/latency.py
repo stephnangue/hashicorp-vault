@@ -47,7 +47,7 @@ def run_ping_latency_tests():
         latency = ping_latency(node)
         ping_latency_results[node] = float(latency)
 
-    ping_latency_results["cluster"] = cluster_name
+    ping_latency_results["env"] = "DEV"
 
     return ping_latency_results
 

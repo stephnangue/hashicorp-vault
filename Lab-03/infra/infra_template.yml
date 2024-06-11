@@ -122,6 +122,16 @@ Resources:
       ToPort: 443
       SourceSecurityGroupId: !GetAtt VaultSecurityGroup.GroupId
 
+  VaultClusterICMPule:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: VaultSecurityGroup
+    Properties:
+      GroupId: !GetAtt VaultSecurityGroup.GroupId
+      IpProtocol: icmp
+      FromPort: 8
+      ToPort: -1
+      SourceSecurityGroupId: !GetAtt VaultSecurityGroup.GroupId
+
   VaultClientsAPIRule:
     Type: AWS::EC2::SecurityGroupIngress
     DependsOn: VaultSecurityGroup
