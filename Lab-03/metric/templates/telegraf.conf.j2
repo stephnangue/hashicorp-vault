@@ -1,0 +1,44 @@
+[global_tags]
+  role = "metric"
+  datacenter = "{{ region }}"
+
+[agent]
+  hostname = "{{ ansible_hostname }}"
+
+[[outputs.influxdb_v2]]
+  urls = ["{{ influxdb_url }}"]
+  token = "{{ influxdb_token }}"
+  organization = "openlab"
+  bucket = "vault_infra"
+
+[[inputs.cpu]]
+
+[[inputs.disk]]
+
+[[inputs.kernel]]
+
+[[inputs.linux_sysctl_fs]]
+
+[[inputs.mem]]
+
+[[inputs.chrony]]
+
+[[inputs.net]]
+  interfaces = ["eth"]
+
+[[inputs.netstat]]
+
+[[inputs.processes]]
+
+[[inputs.swap]]
+
+[[inputs.system]]
+
+[[inputs.exec]]
+  commands = [
+    "python3 /etc/telegraf/scripts/service_health.py"
+  ]
+  interval = "30s"
+  timeout = "15s"
+  name_override = "_vault_service_health"
+  tag_keys = ["env", "service"]
