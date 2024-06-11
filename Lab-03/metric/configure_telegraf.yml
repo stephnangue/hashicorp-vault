@@ -62,9 +62,3 @@
         name: "{{ item.service }}"
       with_items:
         - {service: telegraf} 
-
-    - name: Install python packages
-      ansible.builtin.pip:
-        name:
-          - spintest
-          - tenacity
