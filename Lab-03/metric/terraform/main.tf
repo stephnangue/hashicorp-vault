@@ -6,17 +6,12 @@ terraform {
       }
    }
   backend "s3" {
-    bucket = "vault-bucket-905418489750"
     key = "Lab03/tfstate/grafana/state.tfstate"
-    region = "us-east-1"
   }
 }
 
 provider "grafana" {
    alias = "openlab"
-
-   url   = "https://metric.openlab.net"
-   auth  = "vaultops:vaultops"
 }
 
 resource "grafana_folder" "vault" {

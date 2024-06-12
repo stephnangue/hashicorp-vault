@@ -8,6 +8,10 @@
     terraform_binary: "/usr/bin/terraform"
     terraform_project: "terraform/"
 
+  environment:
+    GRAFANA_URL: "{{ grafana_url }}"
+    GRAFANA_AUTH: "vaultops:vaultops"
+
   tasks:
     - name: Provision dashboards
       terraform:

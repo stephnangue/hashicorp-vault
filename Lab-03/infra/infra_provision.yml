@@ -687,7 +687,7 @@
       service:
         name: nginx
         state: restarted
-        daemon_reload: true     
+        daemon_reload: true 
 
 - name: Configure the devops platform
   hosts: devops

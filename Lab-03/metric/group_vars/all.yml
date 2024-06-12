@@ -7,5 +7,6 @@ vault_bucket: vault-bucket-905418489750
 
 influxdb_token: 'Openlab@influx'
 influxdb_url: "https://influxdb.{{ domain_name }}"
+grafana_url: "https://metric.{{ domain_name }}"
 
 
