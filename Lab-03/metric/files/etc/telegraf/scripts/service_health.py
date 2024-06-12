@@ -26,16 +26,18 @@ def result_print(function):
     
 @result_print
 def check_health():
+    urls = [conf.VAULT_URL]
     tasks = [
         {
             "method": "GET",
-            "route": "/",
+            "route": "/v1/sys/health",
             "expected": {
                 "code": 200,
+                "expected_match": "partial",
             }
         }
     ]
-    return spintest(conf.VAULT_URL, tasks)
+    return spintest(urls, tasks)
 
 @retry(stop=(stop_after_attempt(2)), wait=wait_random(min=1, max=3), reraise=True)
 def run_all_tests():
