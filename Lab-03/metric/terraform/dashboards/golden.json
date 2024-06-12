@@ -22,7 +22,7 @@
   "links": [],
   "panels": [
     {
-      "collapsed": false,
+      "collapsed": true,
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -35,12 +35,115 @@
       "type": "row"
     },
     {
+      "datasource": {
+        "type": "influxdb",
+        "uid": "P5697886F9CA74929"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "fillOpacity": 70,
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1
+          },
+          "mappings": [
+            {
+              "options": {
+                "1": {
+                  "color": "green",
+                  "index": 0,
+                  "text": "Healthy"
+                }
+              },
+              "type": "value"
+            },
+            {
+              "options": {
+                "from": 0,
+                "result": {
+                  "color": "red",
+                  "index": 1,
+                  "text": "Unhealty"
+                },
+                "to": 1
+              },
+              "type": "range"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "id": 39,
+      "options": {
+        "colWidth": 0.9,
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": false
+        },
+        "rowHeight": 0.9,
+        "showValue": "never",
+        "tooltip": {
+          "maxHeight": 600,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "influxdb",
+            "uid": "P5697886F9CA74929"
+          },
+          "query": "from(bucket: \"vault_infra\")\n  |> range(start: v.timeRangeStart, stop: v.timeRangeStop)\n  |> filter(fn: (r) => r[\"_measurement\"] == \"_vault_service_health\")\n  |> filter(fn: (r) => r[\"_field\"] == \"result\")\n  |> filter(fn: (r) => r[\"datacenter\"] == \"us-east-1\")\n  |> filter(fn: (r) => r[\"cluster\"] == \"test_cluster\")\n  |> filter(fn: (r) => r[\"role\"] == \"metric\")\n  |> drop(columns: [\"datacenter\", \"env\", \"role\", \"host\"])\n  |> aggregateWindow(every: v.windowPeriod, fn: mean, createEmpty: false)\n  |> yield(name: \"mean\")",
+          "refId": "A"
+        }
+      ],
+      "title": "Vault health status",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "result (.*)",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "status-history"
+    },
+    {
       "collapsed": false,
       "gridPos": {
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 1
+        "y": 5
       },
       "id": 3,
       "panels": [],
@@ -112,7 +215,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 2
+        "y": 6
       },
       "id": 1,
       "options": {
@@ -213,7 +316,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 7
+        "y": 11
       },
       "id": 2,
       "options": {
@@ -314,7 +417,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 13
+        "y": 17
       },
       "id": 4,
       "options": {
@@ -358,7 +461,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 19
+        "y": 23
       },
       "id": 6,
       "panels": [],
@@ -430,7 +533,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 20
+        "y": 24
       },
       "id": 9,
       "options": {
@@ -532,7 +635,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 26
+        "y": 30
       },
       "id": 7,
       "options": {
@@ -617,7 +720,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -633,7 +737,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 32
+        "y": 36
       },
       "id": 8,
       "options": {
@@ -677,7 +781,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 37
+        "y": 41
       },
       "id": 11,
       "panels": [],
@@ -733,7 +837,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -749,7 +854,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 38
+        "y": 42
       },
       "id": 5,
       "options": {
@@ -835,7 +940,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -851,7 +957,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 44
+        "y": 48
       },
       "id": 10,
       "options": {
@@ -895,7 +1001,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 50
+        "y": 54
       },
       "id": 12,
       "panels": [],
@@ -951,7 +1057,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -967,7 +1074,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 51
+        "y": 55
       },
       "id": 13,
       "options": {
@@ -1054,7 +1161,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1070,7 +1178,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 56
+        "y": 60
       },
       "id": 16,
       "options": {
@@ -1157,7 +1265,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1173,7 +1282,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 62
+        "y": 66
       },
       "id": 15,
       "options": {
@@ -1260,7 +1369,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1276,7 +1386,7 @@
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 67
+        "y": 71
       },
       "id": 14,
       "options": {
@@ -1320,7 +1430,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 71
+        "y": 75
       },
       "id": 17,
       "panels": [],
@@ -1374,7 +1484,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1393,7 +1504,7 @@
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 72
+        "y": 76
       },
       "id": 18,
       "options": {
@@ -1480,7 +1591,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1499,7 +1611,7 @@
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 76
+        "y": 80
       },
       "id": 21,
       "options": {
@@ -1586,7 +1698,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1605,7 +1718,7 @@
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 80
+        "y": 84
       },
       "id": 19,
       "options": {
@@ -1692,7 +1805,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1711,7 +1825,7 @@
         "h": 4,
         "w": 24,
         "x": 0,
-        "y": 84
+        "y": 88
       },
       "id": 20,
       "options": {
@@ -1757,7 +1871,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 88
+        "y": 92
       },
       "id": 22,
       "panels": [],
@@ -1811,7 +1925,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1826,7 +1941,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 89
+        "y": 93
       },
       "id": 23,
       "options": {
@@ -1902,7 +2017,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -1917,7 +2033,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 95
+        "y": 99
       },
       "id": 25,
       "options": {
@@ -1993,7 +2109,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2008,7 +2125,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 101
+        "y": 105
       },
       "id": 26,
       "options": {
@@ -2084,7 +2201,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2099,7 +2217,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 107
+        "y": 111
       },
       "id": 31,
       "options": {
@@ -2134,7 +2252,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 113
+        "y": 117
       },
       "id": 27,
       "panels": [],
@@ -2188,7 +2306,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2198,13 +2317,38 @@
           },
           "unit": "ms"
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "vault.core.handle_login_request mean"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Login request"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "vault.core.handle_request mean"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Non login request"
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 114
+        "y": 118
       },
       "id": 28,
       "options": {
@@ -2261,7 +2405,7 @@
             "insertNulls": false,
             "lineInterpolation": "linear",
             "lineWidth": 1,
-            "pointSize": 5,
+            "pointSize": 1,
             "scaleDistribution": {
               "type": "linear"
             },
@@ -2280,7 +2424,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2296,7 +2441,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 120
+        "y": 124
       },
       "id": 29,
       "options": {
@@ -2373,7 +2518,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2389,7 +2535,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 126
+        "y": 130
       },
       "id": 38,
       "options": {
@@ -2424,7 +2570,7 @@
         "h": 1,
         "w": 24,
         "x": 0,
-        "y": 132
+        "y": 136
       },
       "id": 30,
       "panels": [],
@@ -2481,7 +2627,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2497,7 +2644,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 133
+        "y": 137
       },
       "id": 34,
       "options": {
@@ -2585,7 +2732,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2601,7 +2749,7 @@
         "h": 6,
         "w": 24,
         "x": 0,
-        "y": 139
+        "y": 143
       },
       "id": 35,
       "options": {
@@ -2689,7 +2837,8 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               },
               {
                 "color": "red",
@@ -2705,7 +2854,7 @@
         "h": 5,
         "w": 24,
         "x": 0,
-        "y": 145
+        "y": 149
       },
       "id": 36,
       "options": {
@@ -2758,6 +2907,6 @@
   "timezone": "browser",
   "title": "Golden_dashboard",
   "uid": "bdo9yaa1fewowf",
-  "version": 8,
+  "version": 5,
   "weekStart": ""
 }
