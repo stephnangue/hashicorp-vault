@@ -59,7 +59,11 @@ Parameters:
      Type: AWS::EC2::Subnet::Id
   Vault03SubnetID:
      Description: Private subnet where to deploy vault node3
-     Type: AWS::EC2::Subnet::Id  
+     Type: AWS::EC2::Subnet::Id 
+  VPCID:
+     Description: The ID of the VPC
+     Type: AWS::EC2::VPC::Id
+
 
 Mappings:
   AWSAMIRegionMap:
@@ -353,6 +357,7 @@ Resources:
       KeyName: !Ref KeyName
       ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
       SubnetId: !Ref Vault01SubnetID
+      IamInstanceProfile: !Ref VaultInstanceProfile
       Tags:
         - Key: "Name"
           Value: "Vault01"
@@ -375,6 +380,7 @@ Resources:
       KeyName: !Ref KeyName
       ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
       SubnetId: !Ref Vault02SubnetID
+      IamInstanceProfile: !Ref VaultInstanceProfile
       Tags:
         - Key: "Name"
           Value: "Vault02"
@@ -397,6 +403,7 @@ Resources:
       KeyName: !Ref KeyName
       ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
       SubnetId: !Ref Vault03SubnetID
+      IamInstanceProfile: !Ref VaultInstanceProfile
       Tags:
         - Key: "Name"
           Value: "Vault03"
@@ -408,3 +415,66 @@ Resources:
           Value: "ipa_client"
         - Key: "node_name"
           Value: "vault-n3"
+
+  VaultS3Access:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: VaultS3Access
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: 'ec2.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+
+  VaultInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref VaultS3Access
+
+  EndpointVaultS3:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      VpcEndpointType: 'Gateway'
+      VpcId: !Ref VPCID
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource:
+              - 'arn:aws:s3:::vault_audit_logs/*'
+      RouteTableIds:
+        - !Ref VaultS3RouteTable
+
+  VaultS3RouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPCID
+
+  Vault01SubnetIDRouteTable:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Vault01SubnetID
+      RouteTableId: !Ref VaultS3RouteTable
+
+  Vault02SubnetIDRouteTable:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Vault02SubnetID
+      RouteTableId: !Ref VaultS3RouteTable
+
+  Vault03SubnetIDRouteTable:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Vault03SubnetID
+      RouteTableId: !Ref VaultS3RouteTable

@@ -23,6 +23,7 @@
           Vault01SubnetID: "{{ vault01_subnet_id }}"
           Vault02SubnetID: "{{ vault02_subnet_id }}"
           Vault03SubnetID: "{{ vault03_subnet_id }}"
+          VPCID: "{{ vpc_id }}"
         tags:
           stack: "{{ stack_name }}"
 
@@ -788,6 +789,36 @@
         name: jenkins
         state: restarted
         daemon_reload: true
+
+- name: Add AWS DNS resolver to vault instances
+  hosts: vault
+  tags: identity
+  gather_facts: false
+  become: true
+  vars:
+    ansible_ssh_common_args: -o ProxyCommand="ssh -o StrictHostKeyChecking=no -o ForwardAgent=yes -p 22 -W %h:%p -q ec2-user@{{ hostvars['localhost']['bastion'].instances[0].public_ip_address }}"
+
+  tasks:
+    - name: Compute AWS DNS Resolver to enable outside DNS resolution
+      ansible.builtin.shell: | 
+        metadata="http://169.254.169.254/latest/meta-data"
+        mac=$(curl -s $metadata/network/interfaces/macs/ | head -n1 | tr -d '/')
+        cidr=$(curl -s $metadata/network/interfaces/macs/$mac/vpc-ipv4-cidr-block/ | cut -d '/' -f 1)
+        dns=$(echo $cidr | sed 's/.$/2/')
+        echo $dns
+      register: aws_dns_resolver
+
+    - name: Configure AWS dns resolver     
+      template:
+        src: etc/internet-resolv.conf.j2
+        dest: /etc/resolv.conf
+        owner: root
+        group: root
+        mode: '0644'
+      vars:
+        domain: "{{ domain_name }}"
+        internal_dns_resolver: "{{ hostvars[groups['ipa_server'][0]]['ansible_host'] }}"
+        internet_dns_resolver: "{{ aws_dns_resolver.stdout }}"
 
 - name: Configure the Web browser
   hosts: localhost

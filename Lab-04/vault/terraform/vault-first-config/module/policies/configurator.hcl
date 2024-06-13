@@ -43,3 +43,11 @@ path "mounts" {
 path "mounts/*" {
     capabilities = ["create", "read", "update", "delete", "list", "sudo"]
 }
+
+path "sys/audit/*" {
+    capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+}
+
+path "sys/audit" {
+    capabilities = ["create", "read", "update", "delete", "list", "sudo"]
+}

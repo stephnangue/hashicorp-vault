@@ -1,5 +1,6 @@
 ---
 ####### Variables to modify #######
+vpc_id: vpc-0709c5ce5fd707d37
 public_subnet_id: subnet-0b8d3a0120330fa30
 proxy_subnet_id: subnet-067768e07ae2dcfb6
 vault01_subnet_id: subnet-0e409f479bf7ef1a8
