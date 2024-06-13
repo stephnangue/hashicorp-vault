@@ -1,0 +1,34 @@
+---
+- name: Generate traffic
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  environment:
+    VAULT_ADDR: "https://vault.{{ domain_name }}"
+    VAULT_TOKEN: "{{ vault_token }}"
+
+  tasks:
+    - set_fact:
+        random_string: "{{ query('community.general.random_string', upper=false, numbers=false, special=false)[0] }}"
+
+    - name: Generate the config file   
+      template:
+        src: config.hcl.j2
+        dest: "/tmp/{{ random_string }}_config.hcl"
+        mode: '0644'
+      vars:
+        test_vault_namespace: "{{ vault_namespace }}"
+        test_duration: "{{ duration }}"
+        test_rps: "{{ rps }}"
+        test_workers: "{{ workers }}"
+
+    - name: Run the Benchmark
+      ansible.builtin.shell: | 
+        /usr/bin/vault-benchmark run -config=/tmp/{{ random_string }}_config.hcl
+      register: bench
+      failed_when: bench.rc != 0 and bench.rc != 1
+      changed_when: bench.rc == 0
+
+
+

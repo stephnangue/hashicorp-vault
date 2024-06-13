@@ -1,0 +1,16 @@
+---
+region: us-east-1
+stack_name: VaultInfra
+certs_dir: /etc/pki/tls/certs
+keys_dir: /etc/pki/tls/private
+domain_name: openlab.net
+ldap_all_dc: 'dc=openlab,dc=net'
+vault_bind_user_password: SecretVaultBin@3421d
+vault_version: 1.15.6
+cluster_name: test_cluster
+vault_bucket: vault-bucket-905418489750
+
+influxdb_token: 'Openlab@influx'
+influxdb_url: "https://influxdb.{{ domain_name }}"
+
+
