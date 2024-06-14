@@ -21,6 +21,10 @@
 <match s3.vault.auditlogs>
   @type s3
 
+  <format>
+    @type json
+  </format>
+
   aws_key_id {{ aws_access_key_id }}
   aws_sec_key {{ aws_secret_access_key }}
   s3_bucket {{ vault_bucket }}
@@ -30,7 +34,7 @@
   <buffer time>
     @type file
     path /var/log/fluent/s3
-    time_key 1h
+    time_key 1800
     time_wait 10m
     chunk_limit_size 2GB
   </buffer>
