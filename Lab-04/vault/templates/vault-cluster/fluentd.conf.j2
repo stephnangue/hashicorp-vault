@@ -27,7 +27,7 @@
   s3_region {{ region }}
   path vault_audit_logs/
 
-  <buffer>
+  <buffer time>
     @type file
     path /var/log/fluent/s3
     time_key 3600 # 1 hour
