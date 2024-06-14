@@ -451,8 +451,7 @@ Resources:
           - Effect: Allow
             Principal: '*'
             Action: '*'
-            Resource:
-              - 'arn:aws:s3:::vault_audit_logs/*'
+            Resource: '*'
       RouteTableIds:
         - !Ref VaultS3RouteTable
 
