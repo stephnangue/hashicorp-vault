@@ -53,7 +53,7 @@
 
     - name: Configure the firewall 
       ansible.builtin.shell: | 
-        firewall-cmd --permanent --add-port={9800/tcp,8200/tcp,8201/tcp,443/tcp,8125/udp}
+        firewall-cmd --permanent --add-port={9800/tcp,8200/tcp,8201/tcp,443/tcp,8125/udp,5170/tcp}
         firewall-cmd --permanent --add-service={http,https}
         firewall-cmd --reload
         firewall-cmd --runtime-to-permanent
