@@ -13,8 +13,8 @@
   enable_ruby true
   <record>
     host "#{Socket.gethostname}"
-    agent_timestamp ${Time.now.strftime('%Y-%m-%dT%H:%M:%S.%3NZ')}
-    agent_offset ${time.strftime('%z')}
+    timestamp ${Time.now.strftime('%Y-%m-%dT%H:%M:%S.%3NZ')}
+    offset ${time.strftime('%z')}
   </record>
 </filter>
 

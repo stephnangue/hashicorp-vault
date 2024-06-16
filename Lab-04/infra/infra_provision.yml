@@ -278,7 +278,7 @@
         record_value: "{{ ansible_host }}"
       when: ansible_hostname == "metric"
 
-    - name: Add a host alias for Metric
+    - name: Add a host alias for Metric related to InfluxDB
       ansible.builtin.shell: | 
         kinit admin <<< {{ ipadm_password }}
         ipa host-add-principal {{ inventory_hostname }} host/influxdb.{{ domain_name }}@{{ domain_name | upper }}
@@ -286,10 +286,30 @@
       failed_when: install.rc != 0 and install.rc != 1 and install.rc != 3
       changed_when: install.rc == 0
       when: ansible_hostname == "metric"
+
+    - name: Add a DNS Record for ClickHouse
+      community.general.ipa_dnsrecord:
+        ipa_host: "identity.{{ domain_name }}"
+        ipa_pass: "{{ ipaadmin_password }}"
+        state: present
+        zone_name: "{{ domain_name }}"
+        record_name: clickhouse
+        record_type: 'A'
+        record_value: "{{ ansible_host }}"
+      when: ansible_hostname == "metric"
+
+    - name: Add a host alias for Metric ralated to ClickHouse
+      ansible.builtin.shell: | 
+        kinit admin <<< {{ ipadm_password }}
+        ipa host-add-principal {{ inventory_hostname }} host/clickhouse.{{ domain_name }}@{{ domain_name | upper }}
+      register: install
+      failed_when: install.rc != 0 and install.rc != 1 and install.rc != 3
+      changed_when: install.rc == 0
+      when: ansible_hostname == "metric"
   
     - name: Generate a TLS Certificate for Metric
       ansible.builtin.shell: |
-        ipa-getcert request -K host/{{ inventory_hostname }} -k {{ keys_dir }}/{{ inventory_hostname }}.key -f {{ certs_dir }}/{{ inventory_hostname }}.crt -D {{ inventory_hostname }} -D influxdb.{{ domain_name }}  -N {{ inventory_hostname }}
+        ipa-getcert request -K host/{{ inventory_hostname }} -k {{ keys_dir }}/{{ inventory_hostname }}.key -f {{ certs_dir }}/{{ inventory_hostname }}.crt -D {{ inventory_hostname }} -D influxdb.{{ domain_name }} -D clickhouse.{{ domain_name }}  -N {{ inventory_hostname }}
       register: generate
       failed_when: generate.rc != 0 and generate.rc != 2
       changed_when: generate.rc == 0
@@ -613,7 +633,7 @@
 
     - name: Configure the firewall
       ansible.builtin.shell: | 
-        firewall-cmd --permanent --add-port={3000/tcp,8086/tcp,443/tcp}
+        firewall-cmd --permanent --add-port={3000/tcp,8086/tcp,8123/tcp,443/tcp}
         firewall-cmd --permanent --add-service={http,https}
         firewall-cmd --reload
         firewall-cmd --runtime-to-permanent
