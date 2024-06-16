@@ -1,7 +1,6 @@
 # config file version
 apiVersion: 1
 
-# list of datasources to insert/updata depending on what's available in the database
 datasources:
     - name: InfluxDB_v2_Flux
       type: influxdb
@@ -14,6 +13,15 @@ datasources:
         tlsSkipVerify: true
         defaultBucket: vault_infra
       secureJsonData:
-        token: {{ influxdb_token }}
+        token: {{ influxdb_token }}Ò
       editable: true
       readOnly: false
+
+    - name: ClickHouse
+      type: grafana-clickhouse-datasource
+      jsonData:
+        defaultDatabase: vault
+        port: 9000
+        host: localhost
+        username: default
+        tlsSkipVerify: true
