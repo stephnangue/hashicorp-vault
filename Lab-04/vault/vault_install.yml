@@ -113,6 +113,7 @@
         - {src_file: "vault-cluster/vault.service.j2", dest_file: "/etc/systemd/system/vault.service", user: root, group: root}
         - {src_file: "vault-cluster/telegraf.conf.j2", dest_file: "/etc/telegraf/telegraf.conf", user: root, group: root}
         - {src_file: "vault-cluster/fluentd.conf.j2", dest_file: "/etc/fluent/fluentd.conf", user: root, group: root}
+        - {src_file: "vault-cluster/auditlog.conf.j2", dest_file: "/etc/fluent-bit/auditlog.conf", user: root, group: root}
         - {src_file: "vault-cluster/fluent-bit.conf.j2", dest_file: "/etc/fluent-bit/fluent-bit.conf", user: root, group: root}
 
     - name: Add environment variables to ~/.bashrc

@@ -49,3 +49,11 @@ eval $(ssh-agent -s)
 ssh-add /Users/stephanenangue/Downloads/bastion_aws_key_pair.pem
 
 ipa-getcert request -K host/metric.openlab.net -k /etc/pki/tls/private/metric.openlab.net.key -f /etc/pki/tls/certs/metric.openlab.net.crt -D metric.openlab.net -D influxdb.openlab.net  -N metric.openlab.net
+
+SELECT timestamp as time, log.request.operation as operation, count() as c FROM "vault"."auditlogs" WHERE ( time >= $__fromTime AND time <= $__toTime and log.type == 'response' ) GROUP BY time, operation ORDER BY time ASC LIMIT 1000
+
+
+ansible-playbook infra_provision.yml -e '{"erase_vaultseal_data": true}'
+
+ansible-playbook infra_provision.yml -e '{"erase_vaultseal_data": true}' --tags inventory,metric
+

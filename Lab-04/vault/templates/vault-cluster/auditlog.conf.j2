@@ -1,0 +1,25 @@
+[INPUT]
+    Name        tcp
+    Listen      127.0.0.1
+    Port        5170
+    Chunk_Size  32
+    Buffer_Size 64
+    Format      json
+
+[FILTER]
+    Name nest
+    Match audit_log
+    Operation nest
+    Nest_under log 
+
+[OUTPUT]
+    name http
+    tls on
+    Match audit_log
+    host clickhouse.{{ domain_name }}
+    port 443
+    URI /?query=INSERT+INTO+vault.auditlogs+FORMAT+JSONEachRow
+    format json_stream
+    json_date_key timestamp
+    json_date_format epoch
+    http_user default

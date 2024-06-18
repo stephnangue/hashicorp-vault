@@ -1,6 +1,10 @@
 # config file version
 apiVersion: 1
 
+deleteDatasources:
+  - name: ClickHouse
+  - name: InfluxDB_v2_Flux
+
 datasources:
     - name: InfluxDB_v2_Flux
       type: influxdb
@@ -13,10 +17,10 @@ datasources:
         tlsSkipVerify: true
         defaultBucket: vault_infra
       secureJsonData:
-        token: {{ influxdb_token }}Ò
+        token: {{ influxdb_token }}
       editable: true
       readOnly: false
-
+      
     - name: ClickHouse
       type: grafana-clickhouse-datasource
       jsonData:
