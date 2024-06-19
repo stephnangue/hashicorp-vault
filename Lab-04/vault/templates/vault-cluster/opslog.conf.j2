@@ -1,0 +1,8 @@
+[INPUT]
+    Name            systemd
+    Tag             ops_log
+    Systemd_Filter  _SYSTEMD_UNIT=vault.service
+
+[OUTPUT]
+    Name   stdout
+    Match  ops_log
