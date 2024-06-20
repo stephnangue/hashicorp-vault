@@ -1,8 +1,83 @@
+[SERVICE]
+    Flush 5
+    Daemon Off
+    Log_Level debug
+    Parsers_File parsers.conf
+    Plugins_File plugins.conf
+
 [INPUT]
     Name            systemd
     Tag             ops_log
     Systemd_Filter  _SYSTEMD_UNIT=vault.service
+    Read_From_Tail  On
+
+[FILTER]
+    Name        record_modifier
+    Match       ops_log
+    Remove_key  _TRANSPORT
+    Remove_key  _STREAM_ID
+    Remove_key  PRIORITY
+    Remove_key  SYSLOG_FACILITY
+    Remove_key  SYSLOG_IDENTIFIER
+    Remove_key  _PID
+    Remove_key  _UID
+    Remove_key  _GID
+    Remove_key  _COMM
+    Remove_key  _EXE
+    Remove_key  _CMDLINE
+    Remove_key  _CAP_EFFECTIVE
+    Remove_key  _SELINUX_CONTEXT
+    Remove_key  _SYSTEMD_CGROUP
+    Remove_key  _SYSTEMD_UNIT
+    Remove_key  _SYSTEMD_SLICE
+    Remove_key  _SYSTEMD_INVOCATION_ID
+    Remove_key  _BOOT_ID
+    Remove_key  _MACHINE_ID
+    Remove_key  _RUNTIME_SCOPE
+
+[FILTER]
+    Name        nest
+    Match       ops_log
+    Operation   nest
+    Wildcard    *
+    Nest_under  log 
 
 [OUTPUT]
-    Name   stdout
-    Match  ops_log
+    name http
+    tls on
+    Match ops_log
+    host clickhouse.{{ domain_name }}
+    port 443
+    URI /?query=INSERT+INTO+vault.oplogs+FORMAT+JSONEachRow
+    format json_stream
+    json_date_key timestamp
+    json_date_format epoch
+    http_user default
+
+
+[FILTER]
+    Name       parser
+    Match      ops_log
+    Key_name   MESSAGE
+    Parser     json
+    Reserve_Data
+
+[FILTER]
+    Name       record_modifier
+    Match      ops_log
+    Record hostname ${HOSTNAME}
+
+[FILTER]
+    Name modify
+    Match ops_log
+    Rename @level level
+    Rename @message message
+    Rename @module module
+    Rename @timestamp timestamp
+
+[FILTER]
+    Name        nest
+    Match       ops_log
+    Operation   nest
+    Wildcard    *
+    Nest_under  log

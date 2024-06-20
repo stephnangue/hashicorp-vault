@@ -1,3 +1,10 @@
+[SERVICE]
+    Flush 5
+    Daemon Off
+    Log_Level debug
+    Parsers_File parsers.conf
+    Plugins_File plugins.conf
+
 [INPUT]
     Name        tcp
     Listen      127.0.0.1
@@ -5,12 +12,14 @@
     Chunk_Size  32
     Buffer_Size 64
     Format      json
+    Tag         audit_log
 
 [FILTER]
-    Name nest
-    Match audit_log
-    Operation nest
-    Nest_under log 
+    Name        nest
+    Match       audit_log
+    Operation   nest
+    Wildcard    *
+    Nest_under  log 
 
 [OUTPUT]
     name http
