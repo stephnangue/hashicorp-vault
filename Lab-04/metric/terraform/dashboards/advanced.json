@@ -22,6 +22,19 @@
   "links": [],
   "panels": [
     {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 13,
+      "panels": [],
+      "title": "Incoming logs",
+      "type": "row"
+    },
+    {
       "datasource": {
         "type": "grafana-clickhouse-datasource",
         "uid": "PDEE91DDB90597936"
@@ -84,7 +97,7 @@
         "h": 8,
         "w": 24,
         "x": 0,
-        "y": 0
+        "y": 1
       },
       "id": 1,
       "options": {
@@ -206,6 +219,187 @@
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 9
+      },
+      "id": 14,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "maxHeight": 600,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "builderOptions": {
+            "aggregates": [],
+            "columns": [
+              {
+                "hint": "time",
+                "name": "timestamp",
+                "type": "DateTime"
+              }
+            ],
+            "database": "vault",
+            "filters": [
+              {
+                "condition": "AND",
+                "filterType": "custom",
+                "hint": "time",
+                "key": "",
+                "operator": "WITH IN DASHBOARD TIME RANGE",
+                "type": "datetime"
+              }
+            ],
+            "groupBy": [],
+            "limit": 1000,
+            "meta": {},
+            "mode": "aggregate",
+            "orderBy": [
+              {
+                "default": true,
+                "dir": "ASC",
+                "hint": "time",
+                "name": ""
+              }
+            ],
+            "queryType": "timeseries",
+            "table": "auditlogs"
+          },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "editorType": "sql",
+          "format": 0,
+          "meta": {
+            "builderOptions": {
+              "aggregates": [],
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "timestamp",
+                  "type": "DateTime"
+                }
+              ],
+              "database": "vault",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "groupBy": [],
+              "limit": 1000,
+              "meta": {},
+              "mode": "aggregate",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "auditlogs"
+            }
+          },
+          "pluginVersion": "4.0.8",
+          "queryType": "timeseries",
+          "rawSql": "SELECT timestamp as time, count() as operational_logs_count FROM \"vault\".\"operation\" WHERE ( time >= $__fromTime AND time <= $__toTime ) GROUP BY time ORDER BY time ASC LIMIT 5000",
+          "refId": "A"
+        }
+      ],
+      "title": "Incoming operational logs",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 17
+      },
+      "id": 18,
+      "panels": [],
+      "title": "Top consumers",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "PDEE91DDB90597936"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
@@ -252,7 +446,551 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 8
+        "y": 18
+      },
+      "id": 5,
+      "options": {
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "maxHeight": 600,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "builderOptions": {
+            "columns": [
+              {
+                "hint": "time",
+                "name": "timestamp",
+                "type": "DateTime"
+              }
+            ],
+            "database": "vault",
+            "filters": [
+              {
+                "condition": "AND",
+                "filterType": "custom",
+                "hint": "time",
+                "key": "",
+                "operator": "WITH IN DASHBOARD TIME RANGE",
+                "type": "datetime"
+              }
+            ],
+            "limit": 1000,
+            "meta": {},
+            "mode": "list",
+            "orderBy": [
+              {
+                "default": true,
+                "dir": "ASC",
+                "hint": "time",
+                "name": ""
+              }
+            ],
+            "queryType": "timeseries",
+            "table": "auditlogs"
+          },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "editorType": "sql",
+          "format": 0,
+          "meta": {
+            "builderOptions": {
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "timestamp",
+                  "type": "DateTime"
+                }
+              ],
+              "database": "vault",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "limit": 1000,
+              "meta": {},
+              "mode": "list",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "auditlogs"
+            }
+          },
+          "pluginVersion": "4.0.8",
+          "queryType": "timeseries",
+          "rawSql": "SELECT time, remote_ip, count_operation\nFROM\n(\n  SELECT \n    timestamp as time, \n    log.request.remote_address as remote_ip, \n    count() as count_operation \n  FROM \"vault\".\"auditlogs\" \n  WHERE \n    ( time >= $__fromTime AND time <= $__toTime and log.type == 'response' ) \n  GROUP BY time, remote_ip \n  ORDER BY time, count_operation ASC\n)\nWHERE count_operation > 100",
+          "refId": "A"
+        }
+      ],
+      "title": "Remote addresses with over 100 operations per second",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "count_operation (.*)",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "PDEE91DDB90597936"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 25
+      },
+      "id": 4,
+      "options": {
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "maxHeight": 600,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "builderOptions": {
+            "columns": [
+              {
+                "hint": "time",
+                "name": "timestamp",
+                "type": "DateTime"
+              }
+            ],
+            "database": "vault",
+            "filters": [
+              {
+                "condition": "AND",
+                "filterType": "custom",
+                "hint": "time",
+                "key": "",
+                "operator": "WITH IN DASHBOARD TIME RANGE",
+                "type": "datetime"
+              }
+            ],
+            "limit": 1000,
+            "meta": {},
+            "mode": "list",
+            "orderBy": [
+              {
+                "default": true,
+                "dir": "ASC",
+                "hint": "time",
+                "name": ""
+              }
+            ],
+            "queryType": "timeseries",
+            "table": "auditlogs"
+          },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "editorType": "sql",
+          "format": 0,
+          "meta": {
+            "builderOptions": {
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "timestamp",
+                  "type": "DateTime"
+                }
+              ],
+              "database": "vault",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "limit": 1000,
+              "meta": {},
+              "mode": "list",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "auditlogs"
+            }
+          },
+          "pluginVersion": "4.0.8",
+          "queryType": "timeseries",
+          "rawSql": "SELECT time, namespace, count_operation\nFROM\n(\n  SELECT \n    timestamp as time, \n    log.request.namespace.id as namespace, \n    count() as count_operation \n  FROM \"vault\".\"auditlogs\" \n  WHERE \n    ( time >= $__fromTime AND time <= $__toTime and log.type == 'response' ) \n  GROUP BY time, namespace \n  ORDER BY time, count_operation\n)\nWHERE count_operation > 50",
+          "refId": "A"
+        }
+      ],
+      "title": "Namespaces with over 50 operations per second",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "count_operation (.*)",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "PDEE91DDB90597936"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 32
+      },
+      "id": 6,
+      "options": {
+        "legend": {
+          "calcs": [
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Max",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "maxHeight": 600,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "builderOptions": {
+            "columns": [
+              {
+                "hint": "time",
+                "name": "timestamp",
+                "type": "DateTime"
+              }
+            ],
+            "database": "vault",
+            "filters": [
+              {
+                "condition": "AND",
+                "filterType": "custom",
+                "hint": "time",
+                "key": "",
+                "operator": "WITH IN DASHBOARD TIME RANGE",
+                "type": "datetime"
+              }
+            ],
+            "limit": 1000,
+            "meta": {},
+            "mode": "list",
+            "orderBy": [
+              {
+                "default": true,
+                "dir": "ASC",
+                "hint": "time",
+                "name": ""
+              }
+            ],
+            "queryType": "timeseries",
+            "table": "auditlogs"
+          },
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "editorType": "sql",
+          "format": 0,
+          "meta": {
+            "builderOptions": {
+              "columns": [
+                {
+                  "hint": "time",
+                  "name": "timestamp",
+                  "type": "DateTime"
+                }
+              ],
+              "database": "vault",
+              "filters": [
+                {
+                  "condition": "AND",
+                  "filterType": "custom",
+                  "hint": "time",
+                  "key": "",
+                  "operator": "WITH IN DASHBOARD TIME RANGE",
+                  "type": "datetime"
+                }
+              ],
+              "limit": 1000,
+              "meta": {},
+              "mode": "list",
+              "orderBy": [
+                {
+                  "default": true,
+                  "dir": "ASC",
+                  "hint": "time",
+                  "name": ""
+                }
+              ],
+              "queryType": "timeseries",
+              "table": "auditlogs"
+            }
+          },
+          "pluginVersion": "4.0.8",
+          "queryType": "timeseries",
+          "rawSql": "SELECT time, path, count_operation\nFROM\n(\n  SELECT \n      timestamp as time, \n      log.request.path as path, \n      count() as count_operation \n  FROM \"vault\".\"auditlogs\" \n  WHERE \n    ( time >= $__fromTime AND time <= $__toTime and log.type == 'response' ) \n  GROUP BY time, path \n  ORDER BY time, count_operation ASC\n)\nWHERE count_operation > 10",
+          "refId": "A"
+        }
+      ],
+      "title": "Paths with over 10 operations per second",
+      "transformations": [
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "count_operation (.*)",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 39
+      },
+      "id": 17,
+      "panels": [],
+      "title": "Traffic per operation",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "PDEE91DDB90597936"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 40
       },
       "id": 2,
       "options": {
@@ -468,7 +1206,7 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 15
+        "y": 47
       },
       "id": 3,
       "options": {
@@ -579,6 +1317,19 @@
       "type": "timeseries"
     },
     {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 54
+      },
+      "id": 16,
+      "panels": [],
+      "title": "Log count per log level",
+      "type": "row"
+    },
+    {
       "datasource": {
         "type": "grafana-clickhouse-datasource",
         "uid": "PDEE91DDB90597936"
@@ -641,19 +1392,17 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 22
+        "y": 55
       },
-      "id": 5,
+      "id": 8,
       "options": {
         "legend": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": [],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Max",
-          "sortDesc": true
+          "sortBy": "Name",
+          "sortDesc": false
         },
         "tooltip": {
           "maxHeight": 600,
@@ -663,92 +1412,40 @@
       },
       "targets": [
         {
-          "builderOptions": {
-            "columns": [
-              {
-                "hint": "time",
-                "name": "timestamp",
-                "type": "DateTime"
-              }
-            ],
-            "database": "vault",
-            "filters": [
-              {
-                "condition": "AND",
-                "filterType": "custom",
-                "hint": "time",
-                "key": "",
-                "operator": "WITH IN DASHBOARD TIME RANGE",
-                "type": "datetime"
-              }
-            ],
-            "limit": 1000,
-            "meta": {},
-            "mode": "list",
-            "orderBy": [
-              {
-                "default": true,
-                "dir": "ASC",
-                "hint": "time",
-                "name": ""
-              }
-            ],
-            "queryType": "timeseries",
-            "table": "auditlogs"
-          },
           "datasource": {
             "type": "grafana-clickhouse-datasource",
             "uid": "PDEE91DDB90597936"
           },
           "editorType": "sql",
-          "format": 0,
+          "format": 1,
           "meta": {
             "builderOptions": {
-              "columns": [
-                {
-                  "hint": "time",
-                  "name": "timestamp",
-                  "type": "DateTime"
-                }
-              ],
-              "database": "vault",
-              "filters": [
-                {
-                  "condition": "AND",
-                  "filterType": "custom",
-                  "hint": "time",
-                  "key": "",
-                  "operator": "WITH IN DASHBOARD TIME RANGE",
-                  "type": "datetime"
-                }
-              ],
+              "columns": [],
+              "database": "",
               "limit": 1000,
-              "meta": {},
               "mode": "list",
-              "orderBy": [
-                {
-                  "default": true,
-                  "dir": "ASC",
-                  "hint": "time",
-                  "name": ""
-                }
-              ],
-              "queryType": "timeseries",
-              "table": "auditlogs"
+              "queryType": "table",
+              "table": ""
             }
           },
           "pluginVersion": "4.0.8",
-          "queryType": "timeseries",
-          "rawSql": "SELECT time, remote_ip, count_operation\nFROM\n(\n  SELECT \n    timestamp as time, \n    log.request.remote_address as remote_ip, \n    count() as count_operation \n  FROM \"vault\".\"auditlogs\" \n  WHERE \n    ( time >= $__fromTime AND time <= $__toTime and log.type == 'response' ) \n  GROUP BY time, remote_ip \n  ORDER BY time, count_operation ASC\n)\nWHERE count_operation > 100",
+          "queryType": "table",
+          "rawSql": "SELECT \n  timestamp as time, \n  message.level as level, \n  count(message.level) count_level\nFROM \"vault\".\"operation\" \nWHERE \n  ( time >= $__fromTime AND time <= $__toTime and message.hostname == 'vault-n1.openlab.net') \nGROUP BY time, level \nORDER BY time ASC\n",
           "refId": "A"
         }
       ],
-      "title": "Remote addresses with over 100 operations per second",
+      "title": "vault-n1",
       "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        },
         {
           "id": "renameByRegex",
           "options": {
-            "regex": "count_operation (.*)",
+            "regex": "count_level (.*)",
             "renamePattern": "$1"
           }
         }
@@ -818,19 +1515,17 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 29
+        "y": 62
       },
-      "id": 4,
+      "id": 11,
       "options": {
         "legend": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": [],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Max",
-          "sortDesc": true
+          "sortBy": "Name",
+          "sortDesc": false
         },
         "tooltip": {
           "maxHeight": 600,
@@ -840,92 +1535,40 @@
       },
       "targets": [
         {
-          "builderOptions": {
-            "columns": [
-              {
-                "hint": "time",
-                "name": "timestamp",
-                "type": "DateTime"
-              }
-            ],
-            "database": "vault",
-            "filters": [
-              {
-                "condition": "AND",
-                "filterType": "custom",
-                "hint": "time",
-                "key": "",
-                "operator": "WITH IN DASHBOARD TIME RANGE",
-                "type": "datetime"
-              }
-            ],
-            "limit": 1000,
-            "meta": {},
-            "mode": "list",
-            "orderBy": [
-              {
-                "default": true,
-                "dir": "ASC",
-                "hint": "time",
-                "name": ""
-              }
-            ],
-            "queryType": "timeseries",
-            "table": "auditlogs"
-          },
           "datasource": {
             "type": "grafana-clickhouse-datasource",
             "uid": "PDEE91DDB90597936"
           },
           "editorType": "sql",
-          "format": 0,
+          "format": 1,
           "meta": {
             "builderOptions": {
-              "columns": [
-                {
-                  "hint": "time",
-                  "name": "timestamp",
-                  "type": "DateTime"
-                }
-              ],
-              "database": "vault",
-              "filters": [
-                {
-                  "condition": "AND",
-                  "filterType": "custom",
-                  "hint": "time",
-                  "key": "",
-                  "operator": "WITH IN DASHBOARD TIME RANGE",
-                  "type": "datetime"
-                }
-              ],
+              "columns": [],
+              "database": "",
               "limit": 1000,
-              "meta": {},
               "mode": "list",
-              "orderBy": [
-                {
-                  "default": true,
-                  "dir": "ASC",
-                  "hint": "time",
-                  "name": ""
-                }
-              ],
-              "queryType": "timeseries",
-              "table": "auditlogs"
+              "queryType": "table",
+              "table": ""
             }
           },
           "pluginVersion": "4.0.8",
-          "queryType": "timeseries",
-          "rawSql": "SELECT time, namespace, count_operation\nFROM\n(\n  SELECT \n    timestamp as time, \n    log.request.namespace.id as namespace, \n    count() as count_operation \n  FROM \"vault\".\"auditlogs\" \n  WHERE \n    ( time >= $__fromTime AND time <= $__toTime and log.type == 'response' ) \n  GROUP BY time, namespace \n  ORDER BY time, count_operation\n)\nWHERE count_operation > 50",
+          "queryType": "table",
+          "rawSql": "SELECT \n  timestamp as time, \n  message.level as level, \n  count(message.level) count_level\nFROM \"vault\".\"operation\" \nWHERE \n  ( time >= $__fromTime AND time <= $__toTime and message.hostname == 'vault-n2.openlab.net') \nGROUP BY time, level \nORDER BY time ASC\n",
           "refId": "A"
         }
       ],
-      "title": "Namespaces with over 50 operations per second",
+      "title": "vault-n2",
       "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        },
         {
           "id": "renameByRegex",
           "options": {
-            "regex": "count_operation (.*)",
+            "regex": "count_level (.*)",
             "renamePattern": "$1"
           }
         }
@@ -995,19 +1638,17 @@
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 36
+        "y": 69
       },
-      "id": 6,
+      "id": 12,
       "options": {
         "legend": {
-          "calcs": [
-            "max"
-          ],
+          "calcs": [],
           "displayMode": "table",
           "placement": "right",
           "showLegend": true,
-          "sortBy": "Max",
-          "sortDesc": true
+          "sortBy": "Name",
+          "sortDesc": false
         },
         "tooltip": {
           "maxHeight": 600,
@@ -1017,92 +1658,422 @@
       },
       "targets": [
         {
-          "builderOptions": {
-            "columns": [
-              {
-                "hint": "time",
-                "name": "timestamp",
-                "type": "DateTime"
-              }
-            ],
-            "database": "vault",
-            "filters": [
-              {
-                "condition": "AND",
-                "filterType": "custom",
-                "hint": "time",
-                "key": "",
-                "operator": "WITH IN DASHBOARD TIME RANGE",
-                "type": "datetime"
-              }
-            ],
-            "limit": 1000,
-            "meta": {},
-            "mode": "list",
-            "orderBy": [
-              {
-                "default": true,
-                "dir": "ASC",
-                "hint": "time",
-                "name": ""
-              }
-            ],
-            "queryType": "timeseries",
-            "table": "auditlogs"
-          },
           "datasource": {
             "type": "grafana-clickhouse-datasource",
             "uid": "PDEE91DDB90597936"
           },
           "editorType": "sql",
-          "format": 0,
+          "format": 1,
           "meta": {
             "builderOptions": {
-              "columns": [
-                {
-                  "hint": "time",
-                  "name": "timestamp",
-                  "type": "DateTime"
-                }
-              ],
-              "database": "vault",
-              "filters": [
-                {
-                  "condition": "AND",
-                  "filterType": "custom",
-                  "hint": "time",
-                  "key": "",
-                  "operator": "WITH IN DASHBOARD TIME RANGE",
-                  "type": "datetime"
-                }
-              ],
+              "columns": [],
+              "database": "",
               "limit": 1000,
-              "meta": {},
               "mode": "list",
-              "orderBy": [
-                {
-                  "default": true,
-                  "dir": "ASC",
-                  "hint": "time",
-                  "name": ""
-                }
-              ],
-              "queryType": "timeseries",
-              "table": "auditlogs"
+              "queryType": "table",
+              "table": ""
             }
           },
           "pluginVersion": "4.0.8",
-          "queryType": "timeseries",
-          "rawSql": "SELECT time, path, count_operation\nFROM\n(\n  SELECT \n      timestamp as time, \n      log.request.path as path, \n      count() as count_operation \n  FROM \"vault\".\"auditlogs\" \n  WHERE \n    ( time >= $__fromTime AND time <= $__toTime and log.type == 'response' ) \n  GROUP BY time, path \n  ORDER BY time, count_operation ASC\n)\nWHERE count_operation > 10",
+          "queryType": "table",
+          "rawSql": "SELECT \n  timestamp as time, \n  message.level as level, \n  count(message.level) count_level\nFROM \"vault\".\"operation\" \nWHERE \n  ( time >= $__fromTime AND time <= $__toTime and message.hostname == 'vault-n3.openlab.net') \nGROUP BY time, level \nORDER BY time ASC\n",
           "refId": "A"
         }
       ],
-      "title": "Paths with over 10 operations per second",
+      "title": "vault-n3",
       "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        },
         {
           "id": "renameByRegex",
           "options": {
-            "regex": "count_operation (.*)",
+            "regex": "count_level (.*)",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 76
+      },
+      "id": 15,
+      "panels": [],
+      "title": "Logs count per vault modules",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "PDEE91DDB90597936"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 77
+      },
+      "id": 7,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Name",
+          "sortDesc": false
+        },
+        "tooltip": {
+          "maxHeight": 600,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.0.8",
+          "queryType": "table",
+          "rawSql": "SELECT \n  timestamp as time, \n  message.module as module, \n  count(message.module) count_module\nFROM \"vault\".\"operation\" \nWHERE \n  ( time >= $__fromTime AND time <= $__toTime and message.hostname == 'vault-n1.openlab.net' ) \nGROUP BY time, module \nORDER BY time ASC\n",
+          "refId": "A"
+        }
+      ],
+      "title": "vault-n1",
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "count_module (.*)",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "PDEE91DDB90597936"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 84
+      },
+      "id": 9,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Name",
+          "sortDesc": false
+        },
+        "tooltip": {
+          "maxHeight": 600,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.0.8",
+          "queryType": "table",
+          "rawSql": "SELECT \n  timestamp as time, \n  message.module as module, \n  count(message.module) count_module\nFROM \"vault\".\"operation\" \nWHERE \n  ( time >= $__fromTime AND time <= $__toTime and message.hostname == 'vault-n2.openlab.net' ) \nGROUP BY time, module \nORDER BY time ASC\n",
+          "refId": "A"
+        }
+      ],
+      "title": "vault-n2",
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "count_module (.*)",
+            "renamePattern": "$1"
+          }
+        }
+      ],
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-clickhouse-datasource",
+        "uid": "PDEE91DDB90597936"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 91
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true,
+          "sortBy": "Name",
+          "sortDesc": false
+        },
+        "tooltip": {
+          "maxHeight": 600,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "grafana-clickhouse-datasource",
+            "uid": "PDEE91DDB90597936"
+          },
+          "editorType": "sql",
+          "format": 1,
+          "meta": {
+            "builderOptions": {
+              "columns": [],
+              "database": "",
+              "limit": 1000,
+              "mode": "list",
+              "queryType": "table",
+              "table": ""
+            }
+          },
+          "pluginVersion": "4.0.8",
+          "queryType": "table",
+          "rawSql": "SELECT \n  timestamp as time, \n  message.module as module, \n  count(message.module) count_module\nFROM \"vault\".\"operation\" \nWHERE \n  ( time >= $__fromTime AND time <= $__toTime and message.hostname == 'vault-n3.openlab.net' ) \nGROUP BY time, module \nORDER BY time ASC\n",
+          "refId": "A"
+        }
+      ],
+      "title": "vault-n3",
+      "transformations": [
+        {
+          "id": "prepareTimeSeries",
+          "options": {
+            "format": "multi"
+          }
+        },
+        {
+          "id": "renameByRegex",
+          "options": {
+            "regex": "count_module (.*)",
             "renamePattern": "$1"
           }
         }
@@ -1117,7 +2088,7 @@
     "list": []
   },
   "time": {
-    "from": "now-1h",
+    "from": "now-6h",
     "to": "now"
   },
   "timeRangeUpdatedDuringEditOrView": false,
@@ -1125,6 +2096,6 @@
   "timezone": "browser",
   "title": "Advanced_dashboard",
   "uid": "ddp6rwyc48hs0c",
-  "version": 5,
+  "version": 16,
   "weekStart": ""
 }
