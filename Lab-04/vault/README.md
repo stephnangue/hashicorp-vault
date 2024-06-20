@@ -51,6 +51,6 @@ ssh-add /Users/stephanenangue/Downloads/bastion_aws_key_pair.pem
 CREATE TABLE vault.operation
 (
     timestamp DateTime,
-    log JSON
+    message JSON
 )
 Engine = MergeTree ORDER BY tuple()

@@ -10,57 +10,38 @@
     Tag             ops_log
     Systemd_Filter  _SYSTEMD_UNIT=vault.service
     Read_From_Tail  On
+    Lowercase On
 
 [FILTER]
     Name        record_modifier
     Match       ops_log
-    Remove_key  _TRANSPORT
-    Remove_key  _STREAM_ID
-    Remove_key  PRIORITY
-    Remove_key  SYSLOG_FACILITY
-    Remove_key  SYSLOG_IDENTIFIER
-    Remove_key  _PID
-    Remove_key  _UID
-    Remove_key  _GID
-    Remove_key  _COMM
-    Remove_key  _EXE
-    Remove_key  _CMDLINE
-    Remove_key  _CAP_EFFECTIVE
-    Remove_key  _SELINUX_CONTEXT
-    Remove_key  _SYSTEMD_CGROUP
-    Remove_key  _SYSTEMD_UNIT
-    Remove_key  _SYSTEMD_SLICE
-    Remove_key  _SYSTEMD_INVOCATION_ID
-    Remove_key  _BOOT_ID
-    Remove_key  _MACHINE_ID
-    Remove_key  _RUNTIME_SCOPE
-
-[FILTER]
-    Name        nest
-    Match       ops_log
-    Operation   nest
-    Wildcard    *
-    Nest_under  log 
-
-[OUTPUT]
-    name http
-    tls on
-    Match ops_log
-    host clickhouse.{{ domain_name }}
-    port 443
-    URI /?query=INSERT+INTO+vault.oplogs+FORMAT+JSONEachRow
-    format json_stream
-    json_date_key timestamp
-    json_date_format epoch
-    http_user default
-
+    Remove_key   _transport
+    Remove_key   _stream_id
+    Remove_key   priority
+    Remove_key   syslog_facility
+    Remove_key   syslog_identifier
+    Remove_key   _pid
+    Remove_key   _uid
+    Remove_key   _gid
+    Remove_key   _comm
+    Remove_key   _exe
+    Remove_key   _cmdline
+    Remove_key   _cap_effective
+    Remove_key   _selinux_context
+    Remove_key   _systemd_cgroup
+    Remove_key   _systemd_unit
+    Remove_key   _systemd_slice
+    Remove_key   _systemd_invocation_id
+    Remove_key   _boot_id
+    Remove_key   _machine_id
+    Remove_key   _runtime_scope
+    Remove_key   _hostname
 
 [FILTER]
     Name       parser
     Match      ops_log
-    Key_name   MESSAGE
+    Key_name   message
     Parser     json
-    Reserve_Data
 
 [FILTER]
     Name       record_modifier
@@ -80,4 +61,16 @@
     Match       ops_log
     Operation   nest
     Wildcard    *
-    Nest_under  log
+    Nest_under  message
+
+[OUTPUT]
+    name http
+    tls on
+    Match ops_log
+    host clickhouse.{{ domain_name }}
+    port 443
+    URI /?query=INSERT+INTO+vault.operation+FORMAT+JSONEachRow
+    format json_stream
+    json_date_key timestamp
+    json_date_format epoch
+    http_user default
