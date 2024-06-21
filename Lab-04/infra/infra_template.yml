@@ -72,7 +72,7 @@ Mappings:
       NGINX: ami-0691e3acaeb2e7eba
       IDENTITY: ami-0554e1f0746a3d284
       DEVOPS: ami-02437d219074e3719
-      METRIC: ami-07a730c2cb4ebcbe6
+      METRIC: ami-0c0803dfb7a7c454c
       HAPROXY: ami-0be9a702775b3793f
 
 Resources:

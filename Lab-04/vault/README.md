@@ -54,3 +54,10 @@ CREATE TABLE vault.operation
     message JSON
 )
 Engine = MergeTree ORDER BY tuple()
+
+CREATE TABLE vault.auditlogs
+(
+    timestamp DateTime,
+    log JSON
+)
+Engine = MergeTree ORDER BY tuple()
