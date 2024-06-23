@@ -9,9 +9,7 @@ StartLimitIntervalSec=60
 StartLimitBurst=3
 
 [Service]
-StandardOutput=syslog
-SyslogIdentifier=vault-proxy
-Type=nofity
+Type=notify
 EnvironmentFile={{ vault_conf_dir }}/proxy.env
 User=vault
 Group=vault
