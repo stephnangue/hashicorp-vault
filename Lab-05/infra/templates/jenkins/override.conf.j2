@@ -1,0 +1,8 @@
+[Service]
+# Add JVM configuration options
+Environment="JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Djava.awt.headless=true"
+
+Environment="JENKINS_LISTEN_ADDRESS=127.0.0.1"
+
+# Configuration as code directory
+Environment="CASC_JENKINS_CONFIG=/var/lib/jenkins/jenkins.yaml"

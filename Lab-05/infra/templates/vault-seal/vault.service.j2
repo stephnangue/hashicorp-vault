@@ -1,0 +1,30 @@
+[Unit]
+Description=Hashicorp Vault
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty={{ vault_certs_dir }}/cert.pem
+ConditionFileNotEmpty={{ vault_certs_dir }}/key.pem
+ConditionFileNotEmpty={{ vault_conf_dir }}/vault.hcl
+
+[Service]
+User={{ vault_user }}
+Group={{ vault_user }}
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=yes
+SecureBits=keep-caps
+AmbientCapabilities=CAP_IPC_LOCK CAP_NET_BIND_SERVICE CAP_SYS_ADMIN
+CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK CAP_NET_BIND_SERVICE CAP_SYS_ADMIN
+NoNewPrivileges=yes
+ExecStart={{ vault_bin_dir }}/vault server -config={{ vault_conf_dir }}/vault.hcl
+ExecReload=/bin/kill --signal HUP $MAINPID
+ExecStartPost=/bin/sh {{ vault_bin_dir }}/vault-unseal.sh
+KillSignal=SIGINT
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+LimitNOFILE=65536
+LimitMEMLOCK=infinity
+
+[Install]
+WantedBy=multi-user.target

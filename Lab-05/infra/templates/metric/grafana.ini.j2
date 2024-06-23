@@ -1,0 +1,13 @@
+[server]
+http_addr = 127.0.0.1
+http_port = 3000
+domain = metric.{{ domain_name }}
+root_url = https://metric.{{ domain_name }}/
+enforce_domain = false
+protocol = http
+
+[auth.ldap]
+enabled = true
+config_file = /etc/grafana/ldap.toml
+allow_sign_up = true
+skip_org_role_sync = false

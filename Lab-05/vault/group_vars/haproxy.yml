@@ -1,0 +1,5 @@
+haproxy_cert_dir: /etc/haproxy
+backend:
+  "vault-n1" : "vault-n1.{{ domain_name }}"
+  "vault-n2" : "vault-n2.{{ domain_name }}"
+  "vault-n3" : "vault-n3.{{ domain_name }}"
