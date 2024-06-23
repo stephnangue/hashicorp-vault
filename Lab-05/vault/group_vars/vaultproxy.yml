@@ -6,6 +6,10 @@ vault_proxy_port: 443
 vault_user: vault
 vault_bin_dir: /opt/vault/bin
 vault_conf_dir: /opt/vault/conf
-vault_data_dir: /opt/vault/data
+vault_data_dir: /var/run/vault
 vault_certs_dir: /opt/vault/certs
 vault_client_ca_file: /etc/pki/tls/certs/ca-bundle.crt
+vault_log_dir: /var/log/vault
+vault_log_file: "{{ vault_log_dir }}/vault-proxy.log"
+vault_log_rotate_bytes: 524288000 #500Mo
+vault_log_rotate_max_files: 5

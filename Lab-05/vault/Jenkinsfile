@@ -3,7 +3,8 @@ pipeline {
     parameters {
         booleanParam(name: 'CONFIGURE_HAPROXY', defaultValue: true, description: 'Do you want to configure HAProxy?')
         booleanParam(name: 'INSTALL_VAULT', defaultValue: true, description: 'Do you want to Set up Vault cluster ?')
-        booleanParam(name: 'CONFIGURE_VAULT', defaultValue: true, description: 'Do you want to configure Vault cluster?')        
+        booleanParam(name: 'CONFIGURE_VAULT', defaultValue: true, description: 'Do you want to configure Vault cluster?')
+        booleanParam(name: 'INSTALL_VAULT_PROXY', defaultValue: true, description: 'Do you want to intall Vault proxy?')        
     }
     environment {
         AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
@@ -55,6 +56,17 @@ pipeline {
             }
             steps{
                 ansiblePlaybook playbook: 'Lab-05/vault/vault_configure.yml', colorized: true, credentialsId: 'aws-private-key'
+            }          
+        }
+
+        stage('Install Vault proxy') {
+            when {
+                expression {
+                    return params.INSTALL_VAULT_PROXY
+                }
+            }
+            steps{
+                ansiblePlaybook playbook: 'Lab-05/vault/vault_proxy_install.yml', colorized: true, credentialsId: 'aws-private-key'
             }          
         }
     }

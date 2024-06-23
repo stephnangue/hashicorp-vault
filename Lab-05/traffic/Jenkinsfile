@@ -5,6 +5,7 @@ pipeline {
     }
     parameters {
         string(name: 'VAULT_BENCHMARK_TOKEN', defaultValue: '', description: 'Vault token that will be used to run benchmark')
+        string(name: 'VAULT_URL', defaultValue: "https://vaultproxy.openlab.net", description: 'Vault url or Vault proxy url')
         string(name: 'DURATION', defaultValue: '10m', description: 'The duration of the benchmark')
         string(name: 'RPS', defaultValue: '0', description: 'Number of requests per second')
         string(name: 'WORKERS', defaultValue: '10', description: 'Number of workers')
@@ -12,7 +13,7 @@ pipeline {
     stages {
         stage('Generate Traffic') {
             steps{
-                ansiblePlaybook playbook: 'Lab-05/traffic/generate_traffic.yml', colorized: true, extras: "-e vault_token=${params.VAULT_BENCHMARK_TOKEN} -e duration=${params.DURATION} -e rps=${params.RPS} -e workers=${params.WORKERS}"
+                ansiblePlaybook playbook: 'Lab-05/traffic/generate_traffic.yml', colorized: true, extras: "-e vault_token=${params.VAULT_BENCHMARK_TOKEN} -e duration=${params.DURATION} -e rps=${params.RPS} -e workers=${params.WORKERS} -e vault_url=${params.VAULT_URL}"
             }
         }
     }
