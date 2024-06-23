@@ -66,6 +66,14 @@
       vars:
         server_name: "{{ inventory_hostname }}" 
 
+    - name: Generate Haproxy rate limit whitelist file
+      template:
+        src: haproxy/rate-limit-whitelist.acl.j2
+        dest: /etc/haproxy/rate-limit-whitelist.acl
+        owner: root
+        group: root
+        mode: '0644'
+
     - name: Generate Telegraf configuration file
       template:
         src: haproxy/telegraf.conf.j2
