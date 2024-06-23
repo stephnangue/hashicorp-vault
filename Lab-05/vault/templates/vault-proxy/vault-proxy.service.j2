@@ -20,7 +20,7 @@ SecureBits=keep-caps
 AmbientCapabilities=CAP_IPC_LOCK
 CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK
 NoNewPrivileges=yes
-ExecStart={{ vault_bin_dir }}/vault proxy -config={{ vault_conf_dir }}/proxy.hcl -log-file={{ vault_log_file }} -log-rotate-bytes={{ vault_log_rotate_bytes }} -log-rotate-max-files={{ vault_log_rotate_max_files }}
+ExecStart={{ vault_bin_dir }}/vault proxy -config={{ vault_conf_dir }}/proxy.hcl
 ExecReload=/bin/kill --signal HUP $MAINPID
 KillSignal=SIGINT
 Restart=on-failure
