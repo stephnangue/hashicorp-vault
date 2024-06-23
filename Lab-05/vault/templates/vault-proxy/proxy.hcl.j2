@@ -12,7 +12,7 @@ cache {
 
 }
 
-listener {
+listener "tcp" {
   address            = "{{ ansible_fqdn }}:{{ vault_proxy_port }}"
 
   tls_cert_file      = "{{ vault_certs_dir }}/cert.pem"
