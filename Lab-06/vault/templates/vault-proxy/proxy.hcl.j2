@@ -1,0 +1,36 @@
+pid_file = "/var/run/vault/pidfile"
+
+vault {
+  address = "https://vault.{{ domain_name }}"
+  ca_path = "{{ vault_client_ca_file }}"
+  retry {
+       num_retries = 6
+  }
+}
+
+cache {
+
+}
+
+listener "tcp" {
+  address            = "{{ ansible_fqdn }}:{{ vault_proxy_port }}"
+
+  tls_cert_file      = "{{ vault_certs_dir }}/cert.pem"
+  tls_key_file       = "{{ vault_certs_dir }}/key.pem"
+  tls_client_ca_file = "{{ vault_client_ca_file }}"
+
+  tls_min_version    = "tls12"
+  tls_max_version    = "tls13"
+  tls_cipher_suites  = "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256"
+  tls_disable        = false
+}
+
+listener "tcp" {
+  address     = "127.0.0.1:9000"
+  tls_disable = true
+}
+
+telemetry {
+  dogstatsd_addr            = "localhost:8125"
+  prometheus_retention_time = "0h"
+}

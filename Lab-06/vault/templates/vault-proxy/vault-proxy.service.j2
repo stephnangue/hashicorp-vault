@@ -1,0 +1,33 @@
+[Unit]
+Description=Hashicorp Vault Proxy
+Requires=network-online.target
+After=network-online.target
+ConditionFileNotEmpty={{ vault_certs_dir }}/cert.pem
+ConditionFileNotEmpty={{ vault_certs_dir }}/key.pem
+ConditionFileNotEmpty={{ vault_conf_dir }}/proxy.hcl
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=notify
+EnvironmentFile={{ vault_conf_dir }}/proxy.env
+User=vault
+Group=vault
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=yes
+SecureBits=keep-caps
+AmbientCapabilities=CAP_IPC_LOCK
+CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK
+NoNewPrivileges=yes
+ExecStart={{ vault_bin_dir }}/vault proxy -config={{ vault_conf_dir }}/proxy.hcl
+ExecReload=/bin/kill --signal HUP $MAINPID
+KillSignal=SIGINT
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+LimitNOFILE=65536
+LimitMEMLOCK=infinity
+
+[Install]
+WantedBy=multi-user.target

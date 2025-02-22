@@ -1,0 +1,511 @@
+########################################################################
+# Author: Stephane NANGUE
+########################################################################
+---
+AWSTemplateFormatVersion: 2010-09-09
+Description: Deploy Vault infrastructure
+
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access
+    Type: AWS::EC2::KeyPair::KeyName
+  BasicInstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    ConstraintDescription: must be a valid EC2 instance type.
+  BastionInstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.micro
+    ConstraintDescription: must be a valid EC2 instance type.
+  IdentityInstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.medium
+    ConstraintDescription: must be a valid EC2 instance type.
+  DevOpsInstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.small
+    ConstraintDescription: must be a valid EC2 instance type.
+  VaultInstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.medium
+    ConstraintDescription: must be a valid EC2 instance type.
+  MetricInstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.medium
+    ConstraintDescription: must be a valid EC2 instance type.
+  SSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    Default: 0.0.0.0/0
+    AllowedPattern: ^(([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.){3}([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))$
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+  PublicSubnetID:
+    Description: Public subnet where to deploy bastion host
+    Type: AWS::EC2::Subnet::Id
+  ProxySubnetID:
+     Description: Private subnet where to deploy haproxy and identity
+     Type: AWS::EC2::Subnet::Id 
+  Vault01SubnetID:
+     Description: Private subnet where to deploy vault node1
+     Type: AWS::EC2::Subnet::Id
+  Vault02SubnetID:
+     Description: Private subnet where to deploy vault node2
+     Type: AWS::EC2::Subnet::Id
+  Vault03SubnetID:
+     Description: Private subnet where to deploy vault node3
+     Type: AWS::EC2::Subnet::Id 
+  VPCID:
+     Description: The ID of the VPC
+     Type: AWS::EC2::VPC::Id
+
+
+Mappings:
+  AWSAMIRegionMap:
+    us-east-1:
+      BASIC: ami-0571f0e7db0e42012
+      NGINX: ami-0691e3acaeb2e7eba
+      IDENTITY: ami-0554e1f0746a3d284
+      DEVOPS: ami-02437d219074e3719
+      METRIC: ami-0c0803dfb7a7c454c
+      HAPROXY: ami-0be9a702775b3793f
+
+Resources:
+
+  BastionSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH Access
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: !Ref SSHLocation
+
+  SSHSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH Access from Bastion Security Group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !GetAtt BastionSecurityGroup.GroupId
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          SourceSecurityGroupId: !GetAtt DevOpsSecurityGroup.GroupId
+
+  VaultSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable Web and api access from everywhere
+
+  VaultInternalClusterRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: VaultSecurityGroup
+    Properties:
+      GroupId: !GetAtt VaultSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 8201
+      ToPort: 8201
+      SourceSecurityGroupId: !GetAtt VaultSecurityGroup.GroupId
+
+  VaultClusterAPIRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: VaultSecurityGroup
+    Properties:
+      GroupId: !GetAtt VaultSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      SourceSecurityGroupId: !GetAtt VaultSecurityGroup.GroupId
+
+  VaultClusterICMPRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: VaultSecurityGroup
+    Properties:
+      GroupId: !GetAtt VaultSecurityGroup.GroupId
+      IpProtocol: icmp
+      FromPort: 8
+      ToPort: -1
+      SourceSecurityGroupId: !GetAtt VaultSecurityGroup.GroupId
+
+  VaultClientsAPIRule:
+    Type: AWS::EC2::SecurityGroupIngress
+    DependsOn: VaultSecurityGroup
+    Properties:
+      GroupId: !GetAtt VaultSecurityGroup.GroupId
+      IpProtocol: tcp
+      FromPort: 443
+      ToPort: 443
+      SourceSecurityGroupId: !GetAtt HaproxySecurityGroup.GroupId
+
+  MetricSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable Web access from everywhere
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  IdentitySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable traffic to Identity Server
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 389
+          ToPort: 389
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 636
+          ToPort: 636
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 88
+          ToPort: 88
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 464
+          ToPort: 464
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: udp
+          FromPort: 88
+          ToPort: 88
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: udp
+          FromPort: 464
+          ToPort: 464
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: udp
+          FromPort: 53
+          ToPort: 53
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: udp
+          FromPort: 123
+          ToPort: 123
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8200
+          ToPort: 8200
+          CidrIp: 0.0.0.0/0
+
+  DevOpsSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable Web acces from Bastion Security Group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          SourceSecurityGroupId: !GetAtt BastionSecurityGroup.GroupId
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          SourceSecurityGroupId: !GetAtt BastionSecurityGroup.GroupId
+
+  HaproxySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable Web acces from Bastion Security Group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8080
+          ToPort: 8080
+          SourceSecurityGroupId: !GetAtt BastionSecurityGroup.GroupId
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  VaultProxySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable Web acces from Bastion Security Group
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  BastionInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref BastionInstanceType
+      SecurityGroupIds:
+        - !GetAtt BastionSecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
+      SubnetId: !Ref PublicSubnetID
+      Tags:
+        - Key: "Name"
+          Value: "Bastion"
+        - Key: "app"
+          Value: "bastion"
+        - Key: "deploy"
+          Value: "ansible"
+        - Key: "type"
+          Value: "ipa_client"
+        - Key: "node_name"
+          Value: "bastion"
+
+  IdentityInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref IdentityInstanceType
+      SecurityGroupIds:
+        - !GetAtt SSHSecurityGroup.GroupId
+        - !GetAtt IdentitySecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", IDENTITY ]
+      SubnetId: !Ref ProxySubnetID
+      Tags:
+        - Key: "Name"
+          Value: "Identity"
+        - Key: "app"
+          Value: "identity"
+        - Key: "deploy"
+          Value: "ansible"
+        - Key: "type"
+          Value: "ipa_server"
+        - Key: "node_name"
+          Value: "identity"
+
+  MetricInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref MetricInstanceType
+      SecurityGroupIds:
+        - !GetAtt SSHSecurityGroup.GroupId
+        - !GetAtt MetricSecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", METRIC ]
+      SubnetId: !Ref ProxySubnetID
+      Tags:
+        - Key: "Name"
+          Value: "Metric"
+        - Key: "app"
+          Value: "metric"
+        - Key: "deploy"
+          Value: "ansible"
+        - Key: "type"
+          Value: "ipa_client"
+        - Key: "node_name"
+          Value: "metric"
+
+  DevopInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref DevOpsInstanceType
+      SecurityGroupIds:
+        - !GetAtt SSHSecurityGroup.GroupId
+        - !GetAtt DevOpsSecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", DEVOPS ]
+      SubnetId: !Ref PublicSubnetID
+      Tags:
+        - Key: "Name"
+          Value: "DevOps"
+        - Key: "app"
+          Value: "jenkins"
+        - Key: "deploy"
+          Value: "ansible"
+        - Key: "type"
+          Value: "ipa_client"
+        - Key: "node_name"
+          Value: "devops"
+
+  HaproxyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref BasicInstanceType
+      SecurityGroupIds:
+        - !GetAtt SSHSecurityGroup.GroupId
+        - !GetAtt HaproxySecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", HAPROXY ]
+      SubnetId: !Ref ProxySubnetID
+      Tags:
+        - Key: "Name"
+          Value: "Haproxy"
+        - Key: "app"
+          Value: "haproxy"
+        - Key: "deploy"
+          Value: "ansible"
+        - Key: "type"
+          Value: "ipa_client"
+        - Key: "node_name"
+          Value: "haproxy"
+
+  VaultProxyInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref BasicInstanceType
+      SecurityGroupIds:
+        - !GetAtt SSHSecurityGroup.GroupId
+        - !GetAtt VaultProxySecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
+      SubnetId: !Ref ProxySubnetID
+      Tags:
+        - Key: "Name"
+          Value: "VaultProxy"
+        - Key: "app"
+          Value: "vaultproxy"
+        - Key: "deploy"
+          Value: "ansible"
+        - Key: "type"
+          Value: "ipa_client"
+        - Key: "node_name"
+          Value: "vaultproxy"
+
+  Vault01Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref BasicInstanceType
+      SecurityGroupIds:
+        - !GetAtt SSHSecurityGroup.GroupId
+        - !GetAtt VaultSecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
+      SubnetId: !Ref Vault01SubnetID
+      IamInstanceProfile: !Ref VaultInstanceProfile
+      Tags:
+        - Key: "Name"
+          Value: "Vault01"
+        - Key: "app"
+          Value: "vault"
+        - Key: "deploy"
+          Value: "ansible"
+        - Key: "type"
+          Value: "ipa_client"
+        - Key: "node_name"
+          Value: "vault-n1"
+
+  Vault02Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref BasicInstanceType
+      SecurityGroupIds:
+        - !GetAtt SSHSecurityGroup.GroupId
+        - !GetAtt VaultSecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
+      SubnetId: !Ref Vault02SubnetID
+      IamInstanceProfile: !Ref VaultInstanceProfile
+      Tags:
+        - Key: "Name"
+          Value: "Vault02"
+        - Key: "app"
+          Value: "vault"
+        - Key: "deploy"
+          Value: "ansible"
+        - Key: "type"
+          Value: "ipa_client"
+        - Key: "node_name"
+          Value: "vault-n2"
+
+  Vault03Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref BasicInstanceType
+      SecurityGroupIds:
+        - !GetAtt SSHSecurityGroup.GroupId
+        - !GetAtt VaultSecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
+      SubnetId: !Ref Vault03SubnetID
+      IamInstanceProfile: !Ref VaultInstanceProfile
+      Tags:
+        - Key: "Name"
+          Value: "Vault03"
+        - Key: "app"
+          Value: "vault"
+        - Key: "deploy"
+          Value: "ansible"
+        - Key: "type"
+          Value: "ipa_client"
+        - Key: "node_name"
+          Value: "vault-n3"
+
+  VaultS3Access:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: VaultS3Access
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: 'ec2.amazonaws.com'
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      ManagedPolicyArns:
+        - 'arn:aws:iam::aws:policy/AmazonS3FullAccess'
+
+  VaultInstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref VaultS3Access
+
+  EndpointVaultS3:
+    Type: 'AWS::EC2::VPCEndpoint'
+    Properties:
+      VpcEndpointType: 'Gateway'
+      VpcId: !Ref VPCID
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal: '*'
+            Action: '*'
+            Resource: '*'
+      RouteTableIds:
+        - !Ref VaultS3RouteTable
+
+  VaultS3RouteTable:
+    Type: 'AWS::EC2::RouteTable'
+    Properties:
+      VpcId: !Ref VPCID
+
+  Vault01SubnetIDRouteTable:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Vault01SubnetID
+      RouteTableId: !Ref VaultS3RouteTable
+
+  Vault02SubnetIDRouteTable:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Vault02SubnetID
+      RouteTableId: !Ref VaultS3RouteTable
+
+  Vault03SubnetIDRouteTable:
+    Type: 'AWS::EC2::SubnetRouteTableAssociation'
+    Properties:
+      SubnetId: !Ref Vault03SubnetID
+      RouteTableId: !Ref VaultS3RouteTable

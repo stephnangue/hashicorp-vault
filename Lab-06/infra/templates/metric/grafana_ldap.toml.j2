@@ -1,0 +1,39 @@
+[[servers]]
+host = "identity.{{ domain_name }}"
+port = 389
+
+use_ssl = true
+start_tls = true
+ssl_skip_verify = true
+root_ca_cert = "/etc/pki/tls/certs/ca-bundle.crt"
+client_cert = "/etc/grafana/cert.pem"
+client_key = "/etc/grafana/key.pem"
+
+bind_dn = "uid=vault,cn=sysaccounts,cn=etc,{{ ldap_all_dc }}"
+bind_password = "{{ vault_bind_user_password }}"
+timeout = 10
+search_filter = "(uid=%s)"
+search_base_dns = ["cn=users,cn=accounts,{{ ldap_all_dc }}"]
+group_search_base_dns = ["cn=groups,cn=accounts,{{ ldap_all_dc }}"]
+
+[servers.attributes]
+name = "givenName"
+surname = "sn"
+username = "uid"
+member_of = "memberOf"
+email =  "mail"
+
+# Administrators
+[[servers.group_mappings]]
+group_dn = "cn=secops,cn=groups,cn=accounts,{{ ldap_all_dc }}"
+org_role = "Admin"
+
+# Editors
+[[servers.group_mappings]]
+group_dn = "cn=ipausers,cn=groups,cn=accounts,{{ ldap_all_dc }}"
+org_role = "Editor"
+
+# Read-only for any authenticated user
+[[servers.group_mappings]]
+group_dn = "*"
+org_role = "Viewer"
