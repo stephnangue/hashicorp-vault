@@ -6,7 +6,7 @@ keys_dir: /etc/pki/tls/private
 domain_name: openlab.net
 ldap_all_dc: 'dc=openlab,dc=net'
 vault_bind_user_password: SecretVaultBin@3421d
-vault_version: 1.15.6
+vault_version: 1.18.4
 cluster_name: test_cluster
 vault_bucket: vault-bucket-905418489750
 
