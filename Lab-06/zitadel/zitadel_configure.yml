@@ -57,6 +57,7 @@
         firewall-cmd --runtime-to-permanent
         chown zitadel:zitadel {{ certs_dir }}/{{ inventory_hostname }}.crt
         chown zitadel:zitadel {{ keys_dir }}/{{ inventory_hostname }}.key
+        chown -R zitadel:zitadel /opt/zitadel/
       register: firewall
       failed_when: firewall.rc != 0 and firewall.rc != 1
       changed_when: firewall.rc == 0
