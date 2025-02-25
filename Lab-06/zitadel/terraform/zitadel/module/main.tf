@@ -9,6 +9,7 @@ terraform {
 
 resource "zitadel_org" "openlab" {
   name = "openlab"
+  provider = zitadel
 }
 
 resource "zitadel_project" "vault" {
