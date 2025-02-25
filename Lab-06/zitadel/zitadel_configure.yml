@@ -77,13 +77,9 @@
         src: /opt/zitadel/zitadel-admin-sa.json
       register: jwt_sa_token
 
-    - name: Print returned information
-      ansible.builtin.debug:
-        msg: "{{ jwt_sa_token['content'] | b64decode }}"
-
     - name: Send the JWT Service Account token to localhost
       set_fact:
-        service_account_token: "{{ lookup('file', '/opt/zitadel/zitadel-admin-sa.json') }}"
+        service_account_token: "{{ jwt_sa_token['content'] | b64decode }}"
       delegate_to: localhost
       delegate_facts: True
 
