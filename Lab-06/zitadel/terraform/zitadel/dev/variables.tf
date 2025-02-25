@@ -1,5 +1,5 @@
 
-variable "jwt_profile_file" {
+variable "jwt_profile_json" {
     type        = string
     sensitive   = true
 }

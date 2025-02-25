@@ -100,7 +100,7 @@
         force_init: true
         init_reconfigure: true
         variables:
-          jwt_profile_file: "/tmp/token"
+          jwt_profile_json: "{{ service_account_token | string }}"
         backend_config:
           region: "{{ region }}"
           bucket: "{{ vault_bucket }}"
