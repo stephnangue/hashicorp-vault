@@ -55,7 +55,7 @@ resource "zitadel_application_oidc" "vault" {
 }
 
 
-resource "zitadel_org" "openlab" {
+resource zitadel_org openlab {
   name = "openlab"
   is_default = false
 }
