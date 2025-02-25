@@ -55,6 +55,8 @@
         firewall-cmd --permanent --add-service={http,https}
         firewall-cmd --reload
         firewall-cmd --runtime-to-permanent
+        chown zitadel:zitadel {{ certs_dir }}/{{ inventory_hostname }}.crt
+        chown zitadel:zitadel {{ keys_dir }}/{{ inventory_hostname }}.key
       register: firewall
       failed_when: firewall.rc != 0 and firewall.rc != 1
       changed_when: firewall.rc == 0
