@@ -2,3 +2,4 @@ certs_dir: /etc/pki/tls/certs
 keys_dir: /etc/pki/tls/private
 postgres_cert_dir: /etc/ssl/certs
 domain_name: openlab.net
+region: us-east-1
