@@ -2,6 +2,7 @@ terraform {
   backend "s3" {
     key = "Lab06/tfstate/zitadel/zitadel.tfstate"
   }
+  
   required_providers {
     zitadel = {
       source  = "zitadel/zitadel"

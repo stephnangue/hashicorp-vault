@@ -8,8 +8,7 @@ terraform {
 }
 
 resource "zitadel_org" "openlab" {
-  name = "openlab"
-  provider = zitadel
+  name = "terraform-test"
 }
 
 resource "zitadel_project" "vault" {
