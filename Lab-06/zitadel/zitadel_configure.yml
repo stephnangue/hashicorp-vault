@@ -90,7 +90,7 @@
 
   vars:
     terraform_binary: "/usr/bin/terraform"
-    terraform_project: "terraform/zitadel/dev"
+    terraform_project: "terraform/zitadel/dev/"
 
   tasks:   
     - name: Configure Zitadel with terraform
@@ -98,9 +98,8 @@
         binary_path: "{{ terraform_binary }}"
         project_path: "{{ terraform_project }}"
         force_init: true
-        init_reconfigure: true
         variables:
-          jwt_profile_json: "{{ service_account_token | string }}"
+          jwt_profile_file: "/tmp/token"
         backend_config:
           region: "{{ region }}"
           bucket: "{{ vault_bucket }}"
