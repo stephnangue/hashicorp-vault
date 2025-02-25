@@ -36,7 +36,7 @@ frontend main
 
     stick-table type ipv6 size 1m expire 30s store http_req_rate(10s)
     http-request track-sc0 src
-    http-request deny deny_status 429 if { sc_http_req_rate(0) gt 20 } !{ src -f /etc/haproxy/rate-limit-whitelist.acl }
+    http-request deny deny_status 429 if { sc_http_req_rate(0) gt 200 } !{ src -f /etc/haproxy/rate-limit-whitelist.acl }
 
     default_backend vault
 
