@@ -2,11 +2,10 @@ terraform {
   backend "s3" {
     key = "Lab06/tfstate/zitadel/zitadel.tfstate"
   }
-
   required_providers {
     zitadel = {
       source  = "zitadel/zitadel"
-      version = "1.3.0"
+      version = "2.0.2"
     }
   }
 }
