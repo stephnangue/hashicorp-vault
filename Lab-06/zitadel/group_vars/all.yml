@@ -3,3 +3,4 @@ keys_dir: /etc/pki/tls/private
 domain_name: openlab.net
 region: us-east-1
 stack_name: VaultInfra
+vault_bucket: vault-bucket-905418489750
