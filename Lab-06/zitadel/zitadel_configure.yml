@@ -98,6 +98,7 @@
         binary_path: "{{ terraform_binary }}"
         project_path: "{{ terraform_project }}"
         force_init: true
+        provider_upgrade: true
         variables:
           jwt_profile_json: "{{ service_account_token }}"
         backend_config:
