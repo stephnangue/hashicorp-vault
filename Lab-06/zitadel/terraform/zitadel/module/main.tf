@@ -32,28 +32,6 @@ resource "zitadel_human_user" "vaultops" {
   initial_password   = "VaultOps1!"
 }
 
-resource "zitadel_application_oidc" "vault" {
-  project_id                   = zitadel_project.vault.id
-  org_id                       = zitadel_org.default.id
-
-  name                         = "vault_oidc"
-  redirect_uris                = ["https://vault.openlab.net/ui/vault/auth/oidc/oidc/callback"]
-  response_types               = ["OIDC_RESPONSE_TYPE_CODE"]
-  grant_types                  = ["OIDC_GRANT_TYPE_AUTHORIZATION_CODE"]
-  post_logout_redirect_uris    = []
-  app_type                     = "OIDC_APP_TYPE_WEB"
-  auth_method_type             = "OIDC_AUTH_METHOD_TYPE_BASIC"
-  version                      = "OIDC_VERSION_1_0"
-  clock_skew                   = "0s"
-  dev_mode                     = false
-  access_token_type            = "OIDC_TOKEN_TYPE_BEARER"
-  access_token_role_assertion  = true
-  id_token_role_assertion      = true
-  id_token_userinfo_assertion  = true
-  additional_origins           = []
-  skip_native_app_success_page = false
-}
-
 
 resource "zitadel_org" "default" {
   name = "openlab"
