@@ -39,6 +39,16 @@ Parameters:
     Type: String
     Default: t2.medium
     ConstraintDescription: must be a valid EC2 instance type.
+  PostgresInstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.small
+    ConstraintDescription: must be a valid EC2 instance type.
+  ZitadelInstanceType:
+    Description: EC2 instance type
+    Type: String
+    Default: t2.small
+    ConstraintDescription: must be a valid EC2 instance type.
   SSHLocation:
     Description: The IP address range that can be used to SSH to the EC2 instances
     Type: String
@@ -74,6 +84,8 @@ Mappings:
       DEVOPS: ami-02437d219074e3719
       METRIC: ami-0c0803dfb7a7c454c
       HAPROXY: ami-0be9a702775b3793f
+      POSTGRES: ami-04d7ee3ad9ad5a22a
+      ZITADEL: ami-00b1d4325444a1b99
 
 Resources:
 
@@ -246,6 +258,26 @@ Resources:
         - IpProtocol: tcp
           FromPort: 443
           ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+  PostgresSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable Postgres access from everywhere
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
+
+  ZitadelSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable Web access from everywhere
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 8443
+          ToPort: 8443
           CidrIp: 0.0.0.0/0
 
   BastionInstance:
@@ -447,6 +479,50 @@ Resources:
           Value: "ipa_client"
         - Key: "node_name"
           Value: "vault-n3"
+
+  PostgresInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref PostgresInstanceType
+      SecurityGroupIds:
+        - !GetAtt SSHSecurityGroup.GroupId
+        - !GetAtt PostgresSecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", POSTGRES ]
+      SubnetId: !Ref ProxySubnetID
+      Tags:
+        - Key: "Name"
+          Value: "PostgreSQL"
+        - Key: "app"
+          Value: "postgres"
+        - Key: "deploy"
+          Value: "ansible"
+        - Key: "type"
+          Value: "ipa_client"
+        - Key: "node_name"
+          Value: "postgres"
+
+  ZitadelInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      InstanceType: !Ref ZitadelInstanceType
+      SecurityGroupIds:
+        - !GetAtt SSHSecurityGroup.GroupId
+        - !GetAtt ZitadelSecurityGroup.GroupId
+      KeyName: !Ref KeyName
+      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", ZITADEL ]
+      SubnetId: !Ref ProxySubnetID
+      Tags:
+        - Key: "Name"
+          Value: "Zitadel"
+        - Key: "app"
+          Value: "zitadel"
+        - Key: "deploy"
+          Value: "ansible"
+        - Key: "type"
+          Value: "ipa_client"
+        - Key: "node_name"
+          Value: "zitadel"
 
   VaultS3Access:
     Type: AWS::IAM::Role
