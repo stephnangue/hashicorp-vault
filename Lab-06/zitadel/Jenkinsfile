@@ -29,7 +29,7 @@ pipeline {
                 }
             }
             steps{
-                ansiblePlaybook playbook: 'Lab-06/zitadel/postgres_configure.yml', colorized: true
+                ansiblePlaybook playbook: 'Lab-06/zitadel/postgres_configure.yml', colorized: true, credentialsId: 'aws-private-key'
             }
         }
         stage('Configure Zitadel') {
@@ -39,7 +39,7 @@ pipeline {
                 }
             }
             steps{
-                ansiblePlaybook playbook: 'Lab-06/zitadel/zitadel_configure.yml', colorized: true
+                ansiblePlaybook playbook: 'Lab-06/zitadel/zitadel_configure.yml', colorized: true, credentialsId: 'aws-private-key'
             }          
         }
     }
