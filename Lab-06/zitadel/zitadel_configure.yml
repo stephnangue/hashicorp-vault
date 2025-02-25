@@ -63,6 +63,7 @@
       systemd:
         state: started
         name: "{{ item.service }}"
+        daemon_reload: true
       with_items:
         - {service: zitadel}
       register: result_systemd_start

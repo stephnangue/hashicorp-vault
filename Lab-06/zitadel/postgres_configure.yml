@@ -63,6 +63,7 @@
       systemd:
         state: started
         name: "{{ item.service }}"
+        daemon_reload: true
       with_items:
         - {service: postgresql-16}
       register: result_systemd_start
