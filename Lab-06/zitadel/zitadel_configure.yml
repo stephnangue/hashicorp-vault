@@ -72,6 +72,15 @@
       register: result_systemd_start
       failed_when: "result_systemd_start is failed and 'Could not find the requested service' not in result_systemd_start.msg"
 
+    - name: Read the content of zitadel-admin-sa.json
+      slurp:
+        src: /opt/zitadel/zitadel-admin-sa.json
+      register: jwt_sa_token
+
+    - name: Print returned information
+      ansible.builtin.debug:
+        msg: "{{ jwt_sa_token['content'] | b64decode }}"
+
     - name: Send the JWT Service Account token to localhost
       set_fact:
         service_account_token: "{{ lookup('file', '/opt/zitadel/zitadel-admin-sa.json') }}"
