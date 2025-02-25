@@ -7,10 +7,6 @@ terraform {
   }
 }
 
-resource "zitadel_org" "openlab" {
-  name = "terraform-test"
-}
-
 resource "zitadel_project" "vault" {
   name                     = "vault-project"
   org_id                   = zitadel_org.openlab.id
@@ -56,5 +52,10 @@ resource "zitadel_application_oidc" "vault" {
   id_token_userinfo_assertion  = true
   additional_origins           = []
   skip_native_app_success_page = false
+}
+
+
+resource "zitadel_org" "openlab" {
+  name = "openlab"
 }
 
