@@ -1,0 +1,68 @@
+---
+- name: Build the inventory
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: Get ec2 instances info
+      ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          "tag:stack": "{{ stack_name }}"
+          instance-state-name: [ "running" ]
+      register: ec2_list
+
+    - name: Add instances to inventory
+      add_host:
+        name: "{{ item.tags.app }}.{{ domain_name }}"
+        ansible_user: ec2-user
+        ansible_host: "{{ item.private_ip_address }}"
+        host_key_checking: false
+        groups: "aws,{{ item.tags.type }},{{ item.tags.app }},{{ item.tags.node_name }}"
+      no_log: true
+      when: ec2_list.instances|length > 0
+      loop: "{{ ec2_list['instances'] | flatten(levels=1) }}"
+
+- name: Configure Postgresql
+  become: yes
+  hosts: postgres
+
+  tasks:
+    - name: Stop postgresql-16
+      systemd:
+        state: stopped
+        name: "{{ item.service }}"
+      with_items:
+        - {service: postgresql-16}
+      register: result_systemd_stop
+      failed_when: "result_systemd_stop is failed and 'Could not find the requested service' not in result_systemd_stop.msg"
+
+    - name: Configure the firewall 
+      ansible.builtin.shell: | 
+        firewall-cmd --permanent --add-port=5432/tcp
+        firewall-cmd --reload
+        firewall-cmd --runtime-to-permanent
+      register: firewall
+      failed_when: firewall.rc != 0 and firewall.rc != 1
+      changed_when: firewall.rc == 0
+
+    - name: Deploy config file
+      template:
+        src: "{{ item.src_file }}"
+        dest: "{{ item.dest_file }}"
+        owner: "{{ item.user }}"
+        group: "{{ item.group }}"
+        mode: '0600'
+      with_items:
+        - {src_file: "postgresql.conf.j2", dest_file: "/var/lib/pgsql/16/data/postgresql.conf", user: postgres, group: postgres}
+
+    - name: Start postgresql-16
+      systemd:
+        state: started
+        name: "{{ item.service }}"
+      with_items:
+        - {service: postgresql-16}
+      register: result_systemd_start
+      failed_when: "result_systemd_start is failed and 'Could not find the requested service' not in result_systemd_start.msg"
+

@@ -1,0 +1,69 @@
+---
+- name: Build the inventory
+  hosts: localhost
+  gather_facts: false
+  connection: local
+
+  tasks:
+    - name: Get ec2 instances info
+      ec2_instance_info:
+        region: "{{ region }}"
+        filters:
+          "tag:stack": "{{ stack_name }}"
+          instance-state-name: [ "running" ]
+      register: ec2_list
+
+    - name: Add instances to inventory
+      add_host:
+        name: "{{ item.tags.app }}.{{ domain_name }}"
+        ansible_user: ec2-user
+        ansible_host: "{{ item.private_ip_address }}"
+        host_key_checking: false
+        groups: "aws,{{ item.tags.type }},{{ item.tags.app }},{{ item.tags.node_name }}"
+      no_log: true
+      when: ec2_list.instances|length > 0
+      loop: "{{ ec2_list['instances'] | flatten(levels=1) }}"
+
+- name: Install and configure Zitadel
+  become: yes
+  hosts: zitadel
+
+  tasks:
+    - name: Stop zitadel
+      systemd:
+        state: stopped
+        name: "{{ item.service }}"
+      with_items:
+        - {service: zitadel}
+      register: result_systemd_stop
+      failed_when: "result_systemd_stop is failed and 'Could not find the requested service' not in result_systemd_stop.msg"
+      
+    - name: Deploy config files
+      template:
+        src: "{{ item.src_file }}"
+        dest: "{{ item.dest_file }}"
+        owner: "{{ item.user }}"
+        group: "{{ item.group }}"
+        mode: '0644'
+      with_items:
+        - {src_file: "zitadel.env.j2", dest_file: "/etc/zitadel.env", user: root, group: root}
+        - {src_file: "zitadel.service.j2", dest_file: "/etc/systemd/system/zitadel.service", user: root, group: root}
+
+    - name: Configure the firewall 
+      ansible.builtin.shell: | 
+        firewall-cmd --permanent --add-port=8443/tcp
+        firewall-cmd --permanent --add-service={http,https}
+        firewall-cmd --reload
+        firewall-cmd --runtime-to-permanent
+      register: firewall
+      failed_when: firewall.rc != 0 and firewall.rc != 1
+      changed_when: firewall.rc == 0
+
+    - name: Start zitadel
+      systemd:
+        state: started
+        name: "{{ item.service }}"
+      with_items:
+        - {service: zitadel}
+      register: result_systemd_start
+      failed_when: "result_systemd_start is failed and 'Could not find the requested service' not in result_systemd_start.msg"

@@ -1,0 +1,27 @@
+[Unit]
+Description=Zitadel IAM as a service
+Requires=network-online.target
+After=network-online.target
+
+[Service]
+EnvironmentFile=/etc/zitadel.env
+User=zitadel
+Group=zitadel
+ProtectSystem=full
+ProtectHome=read-only
+PrivateTmp=yes
+SecureBits=keep-caps
+AmbientCapabilities=CAP_IPC_LOCK CAP_NET_BIND_SERVICE CAP_SYS_ADMIN
+CapabilityBoundingSet=CAP_SYSLOG CAP_IPC_LOCK CAP_NET_BIND_SERVICE CAP_SYS_ADMIN
+NoNewPrivileges=yes
+ExecStart=/opt/zitadel/bin/zitadel start-from-init --tlsMode enabled --masterkey "${ZITADEL_MASTERKEY}"
+ExecReload=/bin/kill --signal HUP $MAINPID
+KillSignal=SIGINT
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+LimitNOFILE=65536
+LimitMEMLOCK=infinity
+
+[Install]
+WantedBy=multi-user.target

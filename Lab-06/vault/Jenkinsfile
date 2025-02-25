@@ -44,7 +44,7 @@ pipeline {
                 }
             }
             steps{
-                ansiblePlaybook playbook: 'Lab-06/vault/vault_install.yml', colorized: true, credentialsId: 'aws-private-key', extras: '-e vault_version="1.16.2"'
+                ansiblePlaybook playbook: 'Lab-06/vault/vault_install.yml', colorized: true, credentialsId: 'aws-private-key', extras: '-e vault_version="1.18.4"'
             }          
         }
 
