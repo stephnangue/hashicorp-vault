@@ -8,7 +8,7 @@ terraform {
 }
 
 resource "zitadel_org" "openlab" {
-  name = "Openlab"
+  name = "openlab"
 }
 
 resource "zitadel_project" "vault" {
