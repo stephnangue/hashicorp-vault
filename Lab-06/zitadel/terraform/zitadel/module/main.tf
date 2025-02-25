@@ -8,8 +8,8 @@ terraform {
 }
 
 resource "zitadel_project" "vault" {
-  name                     = "vault-project"
-  org_id                   = zitadel_org.openlab.id
+  name                     = "vaultproject"
+  org_id                   = zitadel_org.default.id
   project_role_assertion   = true
   project_role_check       = true
   has_project_check        = true
@@ -17,7 +17,7 @@ resource "zitadel_project" "vault" {
 }
 
 resource "zitadel_human_user" "vaultops" {
-  org_id             = zitadel_org.openlab.id
+  org_id             = zitadel_org.default.id
   user_name          = "vaultops@zitadel.openlab.net"
   first_name         = "firstname"
   last_name          = "Vault"
@@ -34,7 +34,7 @@ resource "zitadel_human_user" "vaultops" {
 
 resource "zitadel_application_oidc" "vault" {
   project_id                   = zitadel_project.vault.id
-  org_id                       = zitadel_org.openlab.id
+  org_id                       = zitadel_org.default.id
 
   name                         = "vault_oidc"
   redirect_uris                = ["https://vault.openlab.net/ui/vault/auth/oidc/oidc/callback"]
@@ -55,8 +55,7 @@ resource "zitadel_application_oidc" "vault" {
 }
 
 
-resource zitadel_org openlab {
+resource "zitadel_org" "default" {
   name = "openlab"
-  is_default = false
 }
 
