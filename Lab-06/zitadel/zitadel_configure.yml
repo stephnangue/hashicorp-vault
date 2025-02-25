@@ -73,7 +73,7 @@
 
     - name: Send the JWT Service Account token to localhost
       set_fact:
-        service_account_token: "{{ lookup('file', '/tmp/zitadel-admin-sa.json') }}"
+        service_account_token: "{{ lookup('file', '/opt/zitadel/zitadel-admin-sa.json') }}"
       delegate_to: localhost
       delegate_facts: True
 
