@@ -12,7 +12,7 @@ terraform {
 
 provider "zitadel" {
   domain           = "zitadel.openlab.net"
-  insecure         = "true"
+  insecure         = "false"
   port             = "443"
   jwt_profile_file = var.jwt_profile_file
 }
