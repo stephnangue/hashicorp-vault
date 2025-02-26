@@ -4,3 +4,4 @@ domain_name: openlab.net
 region: us-east-1
 stack_name: VaultInfra
 vault_bucket: vault-bucket-905418489750
+cluster_name: test_cluster
