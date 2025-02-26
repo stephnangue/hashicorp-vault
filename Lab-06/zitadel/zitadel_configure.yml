@@ -29,7 +29,7 @@
   hosts: zitadel
 
   vars:
-    temp_skip: false
+    temp_skip: true
 
   tasks:
     - name: Stop zitadel
