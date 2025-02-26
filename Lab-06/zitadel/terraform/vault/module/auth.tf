@@ -16,7 +16,7 @@ resource "vault_jwt_auth_backend_role" "admin" {
   bound_claims = {
     email = "vaultops@zitadel.oplenlab.net, root@zitadel.zitadel.openlab.net"
   }
-  oidc_scopes           = "email"
+  oidc_scopes           = ["email"]
   user_claim            = "email"
   role_type             = "oidc"
   allowed_redirect_uris = ["https://vault.openlab.net/ui/vault/auth/oidc/oidc/callback"]
