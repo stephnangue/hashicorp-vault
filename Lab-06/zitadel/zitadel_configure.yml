@@ -72,6 +72,12 @@
       register: result_systemd_start
       failed_when: "result_systemd_start is failed and 'Could not find the requested service' not in result_systemd_start.msg"
 
+    - name: Wait for zitadel to be available
+      wait_for:
+        host: 127.0.0.1
+        port: 443
+        timeout: 120
+
     - name: Read the content of zitadel-admin-sa.json
       slurp:
         src: /opt/zitadel/zitadel-admin-sa.json
@@ -92,14 +98,14 @@
     terraform_binary: "/usr/bin/terraform"
     terraform_project: "terraform/zitadel/dev/"
 
-  tasks:   
+  tasks: 
     - name: Configure Zitadel with terraform
       terraform:
         binary_path: "{{ terraform_binary }}"
         project_path: "{{ terraform_project }}"
         force_init: true
         variables:
-          jwt_profile_file: "/tmp/token"
+          jwt_profile_json: '{{ service_account_token }}'
         backend_config:
           region: "{{ region }}"
           bucket: "{{ vault_bucket }}"
