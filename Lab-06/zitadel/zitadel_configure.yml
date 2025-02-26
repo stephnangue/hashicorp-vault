@@ -28,6 +28,9 @@
   become: yes
   hosts: zitadel
 
+  vars:
+    temp_skip: false
+
   tasks:
     - name: Stop zitadel
       systemd:
@@ -37,6 +40,7 @@
         - {service: zitadel}
       register: result_systemd_stop
       failed_when: "result_systemd_stop is failed and 'Could not find the requested service' not in result_systemd_stop.msg"
+      when: temp_skip == true
       
     - name: Deploy config files
       template:
@@ -48,6 +52,7 @@
       with_items:
         - {src_file: "zitadel.env.j2", dest_file: "/etc/zitadel.env", user: root, group: root}
         - {src_file: "zitadel.service.j2", dest_file: "/etc/systemd/system/zitadel.service", user: root, group: root}
+      when: temp_skip == true
 
     - name: Configure the firewall 
       ansible.builtin.shell: | 
@@ -61,6 +66,7 @@
       register: firewall
       failed_when: firewall.rc != 0 and firewall.rc != 1
       changed_when: firewall.rc == 0
+      when: temp_skip == true
 
     - name: Start zitadel
       systemd:
@@ -71,12 +77,14 @@
         - {service: zitadel}
       register: result_systemd_start
       failed_when: "result_systemd_start is failed and 'Could not find the requested service' not in result_systemd_start.msg"
+      when: temp_skip == true
 
     - name: Wait for zitadel to be available
       wait_for:
         host: 127.0.0.1
         port: 443
         timeout: 120
+      when: temp_skip == true
 
     - name: Read the content of zitadel-admin-sa.json
       slurp:
