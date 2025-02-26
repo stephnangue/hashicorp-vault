@@ -14,7 +14,7 @@ provider "zitadel" {
   domain           = "zitadel.openlab.net"
   insecure         = "true"
   port             = "443"
-  jwt_profile_json = var.jwt_profile_json
+  jwt_profile_file = var.jwt_profile_file
 }
 
 module "zitadel" {

@@ -107,13 +107,18 @@
     terraform_project: "terraform/zitadel/dev/"
 
   tasks: 
+    - name: Creating a file with content
+      copy:
+        dest: "/tmp/token"
+        content: '{{ service_account_token }}'
+
     - name: Configure Zitadel with terraform
       terraform:
         binary_path: "{{ terraform_binary }}"
         project_path: "{{ terraform_project }}"
         force_init: true
         variables:
-          jwt_profile_json: '{{ service_account_token }}'
+          jwt_profile_file: "/tmp/token"
         backend_config:
           region: "{{ region }}"
           bucket: "{{ vault_bucket }}"
