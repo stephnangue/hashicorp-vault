@@ -40,9 +40,8 @@
 
     - name: Configure the firewall 
       ansible.builtin.shell: | 
-        firewall-cmd --permanent --add-port=5432/tcp
+        firewall-cmd --add-service=postgresql --permanent 
         firewall-cmd --reload
-        firewall-cmd --runtime-to-permanent
         chown postgres:postgres {{ certs_dir }}/{{ inventory_hostname }}.crt
         chown postgres:postgres {{ keys_dir }}/{{ inventory_hostname }}.key
       register: firewall
