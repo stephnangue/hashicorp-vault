@@ -8,7 +8,7 @@ terraform {
 }
 
 resource "zitadel_project" "vault" {
-  name                     = "vaultproject"
+  name                     = "VAULT"
   org_id                   = zitadel_org.default.id
   project_role_assertion   = true
   project_role_check       = true
@@ -36,7 +36,7 @@ resource "zitadel_application_oidc" "vault" {
   project_id                   = zitadel_project.vault.id
   org_id                       = zitadel_org.default.id
 
-  name                         = "vault_oidc"
+  name                         = "VAULT"
   redirect_uris                = ["https://vault.openlab.net/ui/vault/auth/oidc/oidc/callback"]
   response_types               = ["OIDC_RESPONSE_TYPE_CODE"]
   grant_types                  = ["OIDC_GRANT_TYPE_AUTHORIZATION_CODE"]
@@ -56,6 +56,6 @@ resource "zitadel_application_oidc" "vault" {
 
 
 resource "zitadel_org" "default" {
-  name = "openlab"
+  name = "OPENLAB"
 }
 
