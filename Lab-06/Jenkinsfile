@@ -56,28 +56,6 @@ pipeline {
             }          
         }
 
-        stage('Configure Postgres') {
-            when {
-                expression {
-                    return params.CONFIGURE_POSTGRES
-                }
-            }
-            steps{
-                ansiblePlaybook playbook: "${params.LAB}/zitadel/postgres_configure.yml", colorized: true, credentialsId: 'aws-private-key'
-            }
-        }
-
-        stage('Configure Zitadel') {
-            when {
-                expression {
-                    return params.CONFIGURE_ZITADEL
-                }
-            }
-            steps{
-                ansiblePlaybook playbook: "${params.LAB}/zitadel/zitadel_configure.yml", colorized: true, credentialsId: 'aws-private-key'
-            }          
-        }
-
         stage('Configure Haproxy') {
             when {
                 expression {
@@ -121,5 +99,28 @@ pipeline {
                 ansiblePlaybook playbook: "${params.LAB}/vault/vault_proxy_install.yml", colorized: true, credentialsId: 'aws-private-key'
             }          
         }
+
+       stage('Configure Postgres') {
+            when {
+                expression {
+                    return params.CONFIGURE_POSTGRES
+                }
+            }
+            steps{
+                ansiblePlaybook playbook: "${params.LAB}/zitadel/postgres_configure.yml", colorized: true, credentialsId: 'aws-private-key'
+            }
+        }
+
+        stage('Configure Zitadel') {
+            when {
+                expression {
+                    return params.CONFIGURE_ZITADEL
+                }
+            }
+            steps{
+                ansiblePlaybook playbook: "${params.LAB}/zitadel/zitadel_configure.yml", colorized: true, credentialsId: 'aws-private-key'
+            }          
+        }
+
     }
 }
