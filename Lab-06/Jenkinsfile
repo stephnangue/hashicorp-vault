@@ -1,0 +1,125 @@
+pipeline {
+    agent any
+    parameters {
+        string(name: 'LAB', defaultValue: 'Lab-06', description: 'The current Lab')
+        string(name: 'VAULT_VERSION', defaultValue: '1.18.4', description: 'The current Lab')   
+        booleanParam(name: 'CONFIGURE_TELEGRAF', defaultValue: true, description: 'Do you want to configure Telegraf?')
+        booleanParam(name: 'DEPLOY_DASHBOARDS', defaultValue: true, description: 'Do you want to Deploy dashboards?')
+        booleanParam(name: 'CONFIGURE_HAPROXY', defaultValue: true, description: 'Do you want to configure HAProxy?')
+        booleanParam(name: 'INSTALL_VAULT', defaultValue: true, description: 'Do you want to Set up Vault cluster ?')
+        booleanParam(name: 'CONFIGURE_VAULT', defaultValue: true, description: 'Do you want to configure Vault cluster?')
+        booleanParam(name: 'INSTALL_VAULT_PROXY', defaultValue: true, description: 'Do you want to intall Vault proxy?')
+        booleanParam(name: 'CONFIGURE_POSTGRES', defaultValue: true, description: 'Do you want to configure Postgresql?')
+        booleanParam(name: 'CONFIGURE_ZITADEL', defaultValue: true, description: 'Do you want to configure Zitadel?')      
+    }
+    environment {
+        AWS_ACCESS_KEY_ID = credentials('aws-access-key-id')
+        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
+        ANSIBLE_CONFIG = "${params.LAB}/ansible.cfg"
+        VAULT_UNSEAL_TOKEN = credentials('autounseal-token')
+        DEPLOY_ROLE_ID = credentials('deploy-role-id')
+        DEPLOY_SECRET_ID = credentials('deploy-secret-id')
+    }
+
+    stages {
+        stage('Install requirements') {
+            steps{
+                dir("${params.LAB}") {
+                    sh '''
+                      ansible-galaxy install -r requirements/ansible-galaxy.yml
+                      python -m ensurepip --upgrade
+                      python -m pip install -r requirements/python.txt
+                    '''
+                }
+            }
+        }
+
+        stage('Configure Telegraf') {
+            when {
+                expression {
+                    return params.CONFIGURE_TELEGRAF
+                }
+            }
+            steps{
+                ansiblePlaybook playbook: "${params.LAB}/metric/configure_telegraf.yml", colorized: true, credentialsId: 'aws-private-key'
+            }
+        }
+
+        stage('Deploy Grafana dashboards') {
+            when {
+                expression {
+                    return params.DEPLOY_DASHBOARDS
+                }
+            }
+            steps{
+                ansiblePlaybook playbook: "${params.LAB}/metric/deploy_dashboards.yml", colorized: true
+            }          
+        }
+
+        stage('Configure Haproxy') {
+            when {
+                expression {
+                    return params.CONFIGURE_HAPROXY
+                }
+            }
+            steps{
+                ansiblePlaybook playbook: "${params.LAB}/vault/haproxy_configure.yml", colorized: true, credentialsId: 'aws-private-key'
+            }
+        }
+
+        stage('Install Vault cluster') {
+            when {
+                expression {
+                    return params.INSTALL_VAULT
+                }
+            }
+            steps{
+                ansiblePlaybook playbook: "${params.LAB}/vault/vault_install.yml", colorized: true, credentialsId: 'aws-private-key', extras: "-e vault_version="${params.VAULT_VERSION}""
+            }          
+        }
+
+        stage('Configure Vault cluster') {
+            when {
+                expression {
+                    return params.CONFIGURE_VAULT
+                }
+            }
+            steps{
+                ansiblePlaybook playbook: "${params.LAB}/vault/vault_configure.yml", colorized: true, credentialsId: 'aws-private-key'
+            }          
+        }
+
+        stage('Install Vault proxy') {
+            when {
+                expression {
+                    return params.INSTALL_VAULT_PROXY
+                }
+            }
+            steps{
+                ansiblePlaybook playbook: "${params.LAB}/vault/vault_proxy_install.yml", colorized: true, credentialsId: 'aws-private-key'
+            }          
+        }
+
+        stage('Configure Postgres') {
+            when {
+                expression {
+                    return params.CONFIGURE_POSTGRES
+                }
+            }
+            steps{
+                ansiblePlaybook playbook: "${params.LAB}/zitadel/postgres_configure.yml", colorized: true, credentialsId: 'aws-private-key'
+            }
+        }
+
+        stage('Configure Zitadel') {
+            when {
+                expression {
+                    return params.CONFIGURE_ZITADEL
+                }
+            }
+            steps{
+                ansiblePlaybook playbook: "${params.LAB}/zitadel/zitadel_configure.yml", colorized: true, credentialsId: 'aws-private-key'
+            }          
+        }
+    }
+}
