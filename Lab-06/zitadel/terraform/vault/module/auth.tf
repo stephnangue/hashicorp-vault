@@ -1,6 +1,6 @@
 resource "vault_jwt_auth_backend" "oidc" {
     description         = "Demonstration of the Terraform JWT auth backend"
-    path                = "oidc"
+    path                = "oidc1"
     type                = "oidc"
     oidc_discovery_url  = "https://zitadel.openlab.net/"
     oidc_client_id      = "${var.client_id}"
