@@ -1,6 +1,6 @@
 
 resource "vault_ldap_auth_backend" "ldap" {
-    path            = "ldap"
+    path            = "ldap1"
     userdn          = "cn=users,cn=accounts,${var.ldap_all_dc}"
     groupdn         = "cn=users,cn=accounts,${var.ldap_all_dc}"
     binddn          = "uid=vault,cn=sysaccounts,cn=etc,${var.ldap_all_dc}"
