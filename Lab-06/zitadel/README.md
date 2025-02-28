@@ -27,4 +27,3 @@ the default user is root@zitadel.zitadel.openlab.net
     ],
     "user_claim": "email"
 }
-

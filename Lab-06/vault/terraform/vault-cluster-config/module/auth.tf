@@ -38,7 +38,7 @@ resource "vault_jwt_auth_backend_role" "admin" {
   token_policies  = ["default", "admin"]
 
   bound_claims = {
-    email = "vaultops@zitadel.oplenlab.net,root@zitadel.zitadel.openlab.net"
+    email = "vaultops@openlab.zitadel.openlab.net,root@zitadel.zitadel.openlab.net"
   }
   oidc_scopes           = ["email"]
   user_claim            = "email"
