@@ -24,8 +24,8 @@ resource "vault_ldap_auth_backend_group" "group" {
 
 resource "vault_jwt_auth_backend" "oidc" {
     description         = "Demonstration of the Terraform JWT auth backend"
-    path                = "oidc"
-    type                = "oidc1"
+    path                = "oidc1"
+    type                = "oidc"
     oidc_discovery_url  = "https://zitadel.openlab.net"
     oidc_client_id      = "TO_MODIFY"
     oidc_client_secret  = "TO_MODIFY"
