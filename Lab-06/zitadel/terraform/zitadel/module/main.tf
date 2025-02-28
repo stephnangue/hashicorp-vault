@@ -59,3 +59,18 @@ resource "zitadel_org" "default" {
   name = "OPENLAB"
 }
 
+resource "zitadel_project_role" "default" {
+  org_id       = zitadel_org.default.id
+  project_id   = zitadel_project.vault.id
+  role_key     = "super-user"
+  display_name = "super_user"
+  group        = "super_group"
+}
+
+resource "zitadel_user_grant" "vaultops" {
+  project_id = zitadel_project.vault.id
+  org_id     = zitadel_org.default.id
+  role_keys  = ["super-user"]
+  user_id    = zitadel_human_user.vaultops.id
+}
+
