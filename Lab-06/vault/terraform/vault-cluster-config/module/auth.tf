@@ -1,6 +1,6 @@
 
 resource "vault_ldap_auth_backend" "ldap" {
-    path            = "ldap1"
+    path            = "ldap"
     userdn          = "cn=users,cn=accounts,${var.ldap_all_dc}"
     groupdn         = "cn=users,cn=accounts,${var.ldap_all_dc}"
     binddn          = "uid=vault,cn=sysaccounts,cn=etc,${var.ldap_all_dc}"
@@ -24,7 +24,7 @@ resource "vault_ldap_auth_backend_group" "group" {
 
 resource "vault_jwt_auth_backend" "oidc" {
     description         = "Demonstration of the Terraform JWT auth backend"
-    path                = "oidc"
+    path                = "oidc1"
     type                = "oidc"
     oidc_discovery_url  = "https://zitadel.openlab.net"
     oidc_client_id      = "TO_MODIFY"
