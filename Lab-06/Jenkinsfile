@@ -110,16 +110,5 @@ pipeline {
                 ansiblePlaybook playbook: "${params.LAB}/vault/vault_configure.yml", colorized: true, credentialsId: 'aws-private-key'
             }          
         }
-
-        stage('Install Vault proxy') {
-            when {
-                expression {
-                    return params.INSTALL_VAULT_PROXY
-                }
-            }
-            steps{
-                ansiblePlaybook playbook: "${params.LAB}/vault/vault_proxy_install.yml", colorized: true, credentialsId: 'aws-private-key'
-            }          
-        }
     }
 }

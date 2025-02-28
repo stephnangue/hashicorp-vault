@@ -29,11 +29,6 @@ Parameters:
     Type: String
     Default: t2.small
     ConstraintDescription: must be a valid EC2 instance type.
-  VaultInstanceType:
-    Description: EC2 instance type
-    Type: String
-    Default: t2.medium
-    ConstraintDescription: must be a valid EC2 instance type.
   MetricInstanceType:
     Description: EC2 instance type
     Type: String
@@ -250,16 +245,6 @@ Resources:
           ToPort: 443
           CidrIp: 0.0.0.0/0
 
-  VaultProxySecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Enable Web acces from Bastion Security Group
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-          CidrIp: 0.0.0.0/0
-
   PostgresSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -388,28 +373,6 @@ Resources:
           Value: "ipa_client"
         - Key: "node_name"
           Value: "haproxy"
-
-  VaultProxyInstance:
-    Type: AWS::EC2::Instance
-    Properties:
-      InstanceType: !Ref BasicInstanceType
-      SecurityGroupIds:
-        - !GetAtt SSHSecurityGroup.GroupId
-        - !GetAtt VaultProxySecurityGroup.GroupId
-      KeyName: !Ref KeyName
-      ImageId: !FindInMap [ AWSAMIRegionMap, !Ref "AWS::Region", BASIC ]
-      SubnetId: !Ref ProxySubnetID
-      Tags:
-        - Key: "Name"
-          Value: "VaultProxy"
-        - Key: "app"
-          Value: "vaultproxy"
-        - Key: "deploy"
-          Value: "ansible"
-        - Key: "type"
-          Value: "ipa_client"
-        - Key: "node_name"
-          Value: "vaultproxy"
 
   Vault01Instance:
     Type: AWS::EC2::Instance
