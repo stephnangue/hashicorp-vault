@@ -18,7 +18,7 @@ resource "zitadel_project" "vault" {
 
 resource "zitadel_human_user" "vaultops" {
   org_id             = zitadel_org.default.id
-  user_name          = "vaultops@zitadel.openlab.net"
+  user_name          = "vaultops@zitadel.zitadel.openlab.net"
   first_name         = "firstname"
   last_name          = "Vault"
   nick_name          = "Operator"
@@ -27,7 +27,7 @@ resource "zitadel_human_user" "vaultops" {
   gender             = "GENDER_MALE"
   phone              = "+41799999999"
   is_phone_verified  = true
-  email              = "vaultops@zitadel.openlab.net"
+  email              = "vaultops@zitadel.zitadel.openlab.net"
   is_email_verified  = true
   initial_password   = "VaultOps1!"
 }
